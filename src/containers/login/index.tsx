@@ -1,26 +1,27 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LoginForm } from "./form";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
-export function LoginContainer() {
-  const { resolvedTheme, setTheme } = useTheme();
+const Login = () => {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  const handleLogin = (_user: { email: string; name: string; since: number }) => {
+  useEffect(() => setMounted(true), []);
+
+  const handleLogin = () => {
     router.push("/");
   };
 
-  const isDark = resolvedTheme === "dark";
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <div
-      className="min-h-screen w-full grid"
-      style={{ gridTemplateColumns: "minmax(0, 480px) 1fr" }}
-    >
+    <div className="min-h-screen w-full grid" style={{ gridTemplateColumns: "minmax(0, 480px) 1fr" }}>
       {/* Left: form */}
       <div className="flex flex-col px-14 py-10 min-h-screen bg-background">
         {/* Brand row */}
@@ -53,12 +54,7 @@ export function LoginContainer() {
       {/* Right: brand panel */}
       <div className="relative bg-muted border-l border-border overflow-hidden flex-col p-14 hidden lg:flex">
         {/* Subtle grid */}
-        <svg
-          aria-hidden
-          width="100%"
-          height="100%"
-          className="absolute inset-0 opacity-50 pointer-events-none"
-        >
+        <svg aria-hidden width="100%" height="100%" className="absolute inset-0 opacity-50 pointer-events-none">
           <defs>
             <pattern id="lg-grid" width="32" height="32" patternUnits="userSpaceOnUse">
               <path d="M32 0H0V32" fill="none" stroke="var(--color-border)" strokeWidth="1" />
@@ -79,8 +75,8 @@ export function LoginContainer() {
             <em className="italic text-primary">around your day.</em>
           </h2>
           <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[440px]">
-            Book video visits with board-certified physicians in minutes. No phone calls, no waiting
-            rooms — just your care team, when you need them.
+            Book video visits with board-certified physicians in minutes. No phone calls, no waiting rooms — just your
+            care team, when you need them.
           </p>
 
           <div className="mt-9 grid grid-cols-3 gap-3.5">
@@ -99,4 +95,6 @@ export function LoginContainer() {
       </div>
     </div>
   );
-}
+};
+
+export default Login;

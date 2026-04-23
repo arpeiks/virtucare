@@ -3,11 +3,18 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 interface LoginFormProps {
-  onLogin: (user: { email: string; name: string; since: number }) => void;
+  onLogin: () => void;
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {
@@ -18,28 +25,50 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canSubmit = validEmail && password.length >= 6;
+  const canSubmit = validEmail && password.length >= 8;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) {
       if (!validEmail) setError("Please enter a valid email address.");
-      else if (password.length < 6) setError("Password must be at least 6 characters.");
+      else if (password.length < 8) setError("Password must be at least 8 characters.");
       return;
     }
     setSubmitting(true);
     setError("");
-    setTimeout(() => {
-      const name =
-        email
-          .split("@")[0]
-          .replace(/[._-]+/g, " ")
-          .split(" ")
-          .filter(Boolean)
-          .map((w) => w[0].toUpperCase() + w.slice(1))
-          .join(" ") || "Patient";
-      onLogin({ email, name, since: new Date().getFullYear() });
-    }, 400);
+
+    const { error: signInError } = await authClient.signIn.email({ email, password });
+
+    if (!signInError) {
+      onLogin();
+      return;
+    }
+
+    const errorCode = (signInError as { code?: string } | null)?.code;
+    const errorMessage = signInError.message ?? "";
+    const isEmailNotFound =
+      errorCode === "EMAIL_NOT_FOUND" || errorCode === "email_not_found" || /email\s+not\s+found/i.test(errorMessage);
+
+    if (!isEmailNotFound) {
+      setError(signInError.message ?? "Invalid email or password.");
+      setSubmitting(false);
+      return;
+    }
+
+    const derivedName = email.split("@")[0] || "User";
+    const { error: signUpError } = await authClient.signUp.email({
+      name: derivedName,
+      email,
+      password,
+    });
+
+    if (signUpError) {
+      setError(signUpError.message ?? "Unable to create account.");
+      setSubmitting(false);
+      return;
+    }
+
+    onLogin();
   };
 
   return (
@@ -52,17 +81,18 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         Sign in to manage your appointments, message your care team, and review your visit history.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
             Email
           </Label>
-          <div className="relative">
-            <Mail
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle-foreground pointer-events-none"
-            />
-            <Input
+          <InputGroup className="h-[50px] rounded-[10px]">
+            <InputGroupAddon align="inline-start">
+              <InputGroupText>
+                <Mail size={16} />
+              </InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput
               id="email"
               type="email"
               value={email}
@@ -71,22 +101,25 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 if (error) setError("");
               }}
               placeholder="you@example.com"
-              autoComplete="email"
-              className="pl-9 h-[50px] rounded-[10px] focus-visible:border-primary"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
             />
-          </div>
+          </InputGroup>
         </div>
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
             Password
           </Label>
-          <div className="relative">
-            <Lock
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle-foreground pointer-events-none"
-            />
-            <Input
+          <InputGroup className="h-[50px] rounded-[10px]">
+            <InputGroupAddon align="inline-start">
+              <InputGroupText>
+                <Lock size={16} />
+              </InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput
               id="password"
               type={showPw ? "text" : "password"}
               value={password}
@@ -95,20 +128,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 if (error) setError("");
               }}
               placeholder="At least 6 characters"
-              autoComplete="current-password"
-              className="pl-9 pr-10 h-[50px] rounded-[10px] focus-visible:border-primary"
+              autoComplete="off"
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setShowPw((s) => !s)}
-              tabIndex={-1}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-            >
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Button>
-          </div>
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton size="icon-sm" onClick={() => setShowPw((s) => !s)} tabIndex={-1}>
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
 
         {error && (
@@ -117,17 +144,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </div>
         )}
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          disabled={!canSubmit || submitting}
-          className="w-full mt-1.5"
-        >
+        <Button type="submit" variant="primary" size="lg" disabled={!canSubmit || submitting} className="w-full mt-1.5">
           {submitting ? "Signing in…" : "Sign in"}
           {!submitting && <ArrowRight size={16} />}
         </Button>
-
       </form>
     </>
   );
