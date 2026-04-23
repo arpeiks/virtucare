@@ -1,3 +1,5 @@
+"use client";
+
 import { ThemeProvider } from "./theme";
 
 interface ProvidersProps {
