@@ -44,17 +44,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       return;
     }
 
-    const errorCode = (signInError as { code?: string } | null)?.code;
-    const errorMessage = signInError.message ?? "";
-    const isEmailNotFound =
-      errorCode === "EMAIL_NOT_FOUND" || errorCode === "email_not_found" || /email\s+not\s+found/i.test(errorMessage);
-
-    if (!isEmailNotFound) {
-      setError(signInError.message ?? "Invalid email or password.");
-      setSubmitting(false);
-      return;
-    }
-
     const derivedName = email.split("@")[0] || "User";
     const { error: signUpError } = await authClient.signUp.email({
       name: derivedName,
@@ -63,7 +52,28 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     });
 
     if (signUpError) {
+      const signUpCode = (signUpError as { code?: string } | null)?.code;
+      const signUpMessage = signUpError.message ?? "";
+      const isAlreadyExists =
+        signUpCode === "EMAIL_ALREADY_EXISTS" ||
+        signUpCode === "email_already_exists" ||
+        /already\s+exists/i.test(signUpMessage);
+
+      if (isAlreadyExists) {
+        setError(signInError.message ?? "Invalid email or password.");
+        setSubmitting(false);
+        return;
+      }
+
       setError(signUpError.message ?? "Unable to create account.");
+      setSubmitting(false);
+      return;
+    }
+
+    const { error: signInAfterSignUpError } = await authClient.signIn.email({ email, password });
+
+    if (signInAfterSignUpError) {
+      setError(signInAfterSignUpError.message ?? "Unable to sign in.");
       setSubmitting(false);
       return;
     }
