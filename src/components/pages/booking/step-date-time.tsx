@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
+import Hidden from "@/components/control/hidden"
+import { Ternary } from "@/components/control/ternary"
 
 interface Doctor {
   id: string
@@ -190,7 +192,8 @@ export function StepDateTime({
           }
         </h3>
 
-        {selectedDate ? (
+        <Ternary condition={!!selectedDate}>
+          {selectedDate ? (
           (() => {
             const slots = slotsForDate(selectedDate)
             const allDisabled = slots.every(s => s.disabled)
@@ -209,7 +212,7 @@ export function StepDateTime({
                   <div className="mt-4 py-3 text-sm text-muted-foreground">
                     All slots on this day are unavailable. Try another date.
                   </div>
-                  {slotStyle === 'list' ? (
+                  <Ternary condition={slotStyle === 'list'}>
                     <div className="mt-2 flex flex-col gap-1.5">
                       {slots.map(({ time: slot }) => (
                         <button
@@ -221,7 +224,6 @@ export function StepDateTime({
                         </button>
                       ))}
                     </div>
-                  ) : (
                     <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2">
                       {slots.map(({ time: slot }) => (
                         <button
@@ -233,7 +235,7 @@ export function StepDateTime({
                         </button>
                       ))}
                     </div>
-                  )}
+                  </Ternary>
                 </>
               )
             }
@@ -256,7 +258,9 @@ export function StepDateTime({
                       )}
                     >
                       <span>{formatTime(slot)}</span>
-                      {selectedTime === slot && !disabled && <Check size={16} className="text-primary" />}
+                      <Hidden display={selectedTime === slot && !disabled}>
+                        <Check size={16} className="text-primary" />
+                      </Hidden>
                     </button>
                   ))}
                 </div>
@@ -285,11 +289,11 @@ export function StepDateTime({
               </div>
             )
           })()
-        ) : (
+          ) : null}
           <div className="mt-4 py-6 text-sm text-muted-foreground">
             Choose a day above to see open times.
           </div>
-        )}
+        </Ternary>
       </div>
     </div>
   )

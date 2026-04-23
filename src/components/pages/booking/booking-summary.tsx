@@ -4,6 +4,7 @@ import React from "react"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import Hidden from "@/components/control/hidden"
 
 interface Doctor {
   id: string
@@ -88,7 +89,7 @@ export function BookingSummary({
         />
       </div>
 
-      {reason && (
+      <Hidden display={!!reason}>
         <>
           <Separator className="my-3" />
           <div>
@@ -100,7 +101,7 @@ export function BookingSummary({
             </div>
           </div>
         </>
-      )}
+      </Hidden>
     </Card>
   )
 }

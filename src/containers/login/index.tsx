@@ -1,11 +1,12 @@
 "use client";
 
-import { LoginForm } from "./form";
+import { Form } from "./form";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Ternary } from "@/components/control/ternary";
 
 const Login = () => {
   const router = useRouter();
@@ -36,14 +37,17 @@ const Login = () => {
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
             className="border border-border"
           >
-            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          <Ternary condition={isDark}>
+            <Sun size={16} />
+            <Moon size={16} />
+          </Ternary>
           </Button>
         </div>
 
         <div className="flex-1" />
 
         <div className="max-w-[380px]">
-          <LoginForm onLogin={handleLogin} />
+          <Form onLogin={handleLogin} />
         </div>
 
         <div className="flex-1" />

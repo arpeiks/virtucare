@@ -20,6 +20,7 @@ import {
   CalendarCheck,
   Briefcase,
 } from "lucide-react";
+import Hidden from "@/components/control/hidden";
 
 interface Doctor {
   id: string;
@@ -182,25 +183,25 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap gap-2 mb-2.5">
                 <Badge variant="secondary">{doctor.specialty}</Badge>
-                {doctor.nextAvailable === "Today" && (
+                <Hidden display={doctor.nextAvailable === "Today"}>
                   <Badge
                     variant="outline"
                     className="border-success/40 text-success bg-success/10"
                   >
                     Available today
                   </Badge>
-                )}
+                </Hidden>
               </div>
 
               <h1 className="font-serif text-4xl text-foreground tracking-tight leading-[1.05] mb-1.5">
                 {doctor.name}
               </h1>
 
-              {doctor.subspecialty && (
+              <Hidden display={!!doctor.subspecialty}>
                 <p className="text-sm text-muted-foreground">
                   {doctor.subspecialty}
                 </p>
-              )}
+              </Hidden>
 
               <div className="flex flex-wrap items-center gap-5 mt-4">
                 <div className="flex items-center gap-1.5 text-sm">
@@ -213,25 +214,25 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
                   </span>
                 </div>
                 <Stat label="Experience" value={`${doctor.years} yrs`} />
-                {locationCity && (
+                <Hidden display={!!locationCity}>
                   <div className="flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-sm text-foreground font-medium">
                       {locationCity}
                     </span>
                   </div>
-                )}
+                </Hidden>
               </div>
             </div>
           </div>
 
           <Separator className="mt-8" />
 
-          {doctor.bio && (
+          <Hidden display={!!doctor.bio}>
             <Section icon={Briefcase} title="About">
               <p className="text-sm text-foreground leading-relaxed">{doctor.bio}</p>
             </Section>
-          )}
+          </Hidden>
 
           <Section icon={CalendarCheck} title="Availability">
             <div className="flex flex-wrap gap-2">

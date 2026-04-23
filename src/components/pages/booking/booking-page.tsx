@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, Check } from "lucide-react"
+import Hidden from "@/components/control/hidden"
+import { Ternary } from "@/components/control/ternary"
 import { BookingProgress } from "./booking-progress"
 import { StepDateTime } from "./step-date-time"
 import { StepReason } from "./step-reason"
@@ -173,7 +175,7 @@ export function BookingPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-7 mt-7">
         <Card className="p-6">
-          {step === 1 && (
+          <Hidden display={step === 1}>
             <StepDateTime
               doctor={doctor}
               selectedDate={selectedDate}
@@ -183,18 +185,18 @@ export function BookingPage({
               slotStyle={slotStyle}
               bookedSlots={bookedSlots}
             />
-          )}
+          </Hidden>
 
-          {step === 2 && (
+          <Hidden display={step === 2}>
             <StepReason
               reason={reason}
               setReason={setReason}
               visitType={visitType}
               setVisitType={setVisitType}
             />
-          )}
+          </Hidden>
 
-          {step === 3 && (
+          <Hidden display={step === 3}>
             <StepReview
               doctor={doctor}
               selectedDate={selectedDate}
@@ -203,13 +205,13 @@ export function BookingPage({
               visitType={visitType}
               editing={!!editingId}
             />
-          )}
+          </Hidden>
 
-          {error && (
+          <Hidden display={!!error}>
             <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
               {error}
             </div>
-          )}
+          </Hidden>
 
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
             <Button
@@ -222,7 +224,7 @@ export function BookingPage({
               {step === 1 ? "Back to profile" : "Back"}
             </Button>
 
-            {step < 3 ? (
+            <Ternary condition={step < 3}>
               <Button
                 variant="primary"
                 disabled={step === 1 ? !canProceed1 : !canProceed2}
@@ -232,7 +234,6 @@ export function BookingPage({
                 Continue
                 <ArrowRight size={14} />
               </Button>
-            ) : (
               <Button
                 variant="primary"
                 size="lg"
@@ -245,9 +246,11 @@ export function BookingPage({
                   : editingId
                   ? "Update appointment"
                   : "Confirm booking"}
-                {!submitting && <Check size={16} />}
+                <Hidden display={!submitting}>
+                  <Check size={16} />
+                </Hidden>
               </Button>
-            )}
+            </Ternary>
           </div>
         </Card>
 

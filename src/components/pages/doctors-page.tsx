@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import Hidden from "@/components/control/hidden";
+import { Ternary } from "@/components/control/ternary";
 
 type BookedSlot = { date: string; time: string };
 
@@ -185,7 +187,9 @@ function DoctorCard({
       <div className="p-6">
         <div className="flex gap-4">
           <Avatar size="lg" className="size-14 shrink-0">
-            {doctor.imageUrl && <AvatarImage src={doctor.imageUrl} alt={doctor.name} />}
+            <Hidden display={!!doctor.imageUrl}>
+              <AvatarImage src={doctor.imageUrl!} alt={doctor.name} />
+            </Hidden>
             <AvatarFallback className="text-sm font-medium bg-secondary text-secondary-foreground">
               {getInitials(doctor.name)}
             </AvatarFallback>
@@ -210,9 +214,9 @@ function DoctorCard({
             </div>
 
             <div className="flex gap-3 mt-2.5 text-[12px] text-muted-foreground">
-              {doctor.years > 0 && <span>{doctor.years} yrs experience</span>}
-              {doctor.years > 0 && locationCity && <span>·</span>}
-              {locationCity && <span>{locationCity}</span>}
+              <Hidden display={doctor.years > 0}><span>{doctor.years} yrs experience</span></Hidden>
+              <Hidden display={doctor.years > 0 && !!locationCity}><span>·</span></Hidden>
+              <Hidden display={!!locationCity}><span>{locationCity}</span></Hidden>
             </div>
           </div>
         </div>
@@ -223,19 +227,18 @@ function DoctorCard({
           <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {slotsLabel}
           </div>
-          {displaySlots.length > 4 && (
+          <Hidden display={displaySlots.length > 4}>
             <div className="text-[12px] text-muted-foreground">
               +{displaySlots.length - 4} more
             </div>
-          )}
+          </Hidden>
         </div>
 
-        {displaySlots.length === 0 ? (
+        <Ternary condition={displaySlots.length === 0}>
           <div className="text-[13px] text-muted-foreground py-2.5">
             No openings {slotsLabel.toLowerCase()} —{" "}
             <span className="text-primary">see full schedule</span>
           </div>
-        ) : (
           <div className="flex gap-2 flex-wrap">
             {displaySlots.slice(0, 4).map((s) => (
               <button
@@ -250,7 +253,7 @@ function DoctorCard({
               </button>
             ))}
           </div>
-        )}
+        </Ternary>
 
         <div className="flex gap-2.5 mt-5">
           <Button
@@ -454,7 +457,7 @@ export function DoctorsPage() {
           </p>
         </div>
 
-        {!loading && availableToday > 0 && (
+        <Hidden display={!loading && availableToday > 0}>
           <Badge
             variant="secondary"
             className="h-7 px-3 text-[13px] gap-1.5 text-success border-success/20 bg-success/10 shrink-0"
@@ -462,7 +465,7 @@ export function DoctorsPage() {
             <span className="size-1.5 rounded-full bg-success inline-block" />
             {availableToday} available today
           </Badge>
-        )}
+        </Hidden>
       </div>
 
       <div className="flex gap-3 items-center p-3 bg-card border border-border rounded-[14px] mb-5 flex-wrap">
@@ -504,32 +507,32 @@ export function DoctorsPage() {
         />
       </div>
 
-      {!loading && !error && (
+      <Hidden display={!loading && !error}>
         <div className="flex justify-between items-center mb-4">
           <div className="text-[13px] text-muted-foreground">
             <span className="text-foreground font-medium">{filtered.length}</span>{" "}
             {filtered.length === 1 ? "doctor" : "doctors"} match your filters
           </div>
         </div>
-      )}
+      </Hidden>
 
-      {error && (
+      <Hidden display={!!error}>
         <div className="p-6 bg-destructive/10 border border-destructive/20 rounded-xl text-[14px] text-destructive text-center">
           {error}
         </div>
-      )}
+      </Hidden>
 
-      {loading && (
+      <Hidden display={loading}>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <DoctorCardSkeleton key={i} />
           ))}
         </div>
-      )}
+      </Hidden>
 
-      {!loading && !error && (
+      <Hidden display={!loading && !error}>
         <>
-          {filtered.length === 0 ? (
+          <Ternary condition={filtered.length === 0}>
             <EmptyState
               title="No doctors match your filters"
               body="Try broadening your search or clearing filters to see more options."
@@ -539,7 +542,6 @@ export function DoctorsPage() {
                 </Button>
               }
             />
-          ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4">
               {filtered.map((d) => (
                 <DoctorCard
@@ -551,9 +553,9 @@ export function DoctorsPage() {
                 />
               ))}
             </div>
-          )}
+          </Ternary>
         </>
-      )}
+      </Hidden>
     </div>
   );
 }

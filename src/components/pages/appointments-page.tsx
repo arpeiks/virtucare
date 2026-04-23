@@ -28,6 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import Hidden from "@/components/control/hidden";
+import { Ternary } from "@/components/control/ternary";
 
 interface AppointmentRow {
   id: string;
@@ -128,7 +130,7 @@ function EmptyState({
           {body}
         </div>
       </div>
-      {action && <div className="mt-1">{action}</div>}
+      <Hidden display={!!action}><div className="mt-1">{action}</div></Hidden>
     </div>
   );
 }
@@ -256,9 +258,9 @@ function AppointmentCard({
 
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="size-9 shrink-0">
-              {appt.doctorImageUrl && (
-                <AvatarImage src={appt.doctorImageUrl} alt={appt.doctorName} />
-              )}
+              <Hidden display={!!appt.doctorImageUrl}>
+                <AvatarImage src={appt.doctorImageUrl!} alt={appt.doctorName} />
+              </Hidden>
               <AvatarFallback className="text-xs font-medium">
                 {getInitials(appt.doctorName)}
               </AvatarFallback>
@@ -281,14 +283,14 @@ function AppointmentCard({
         </div>
 
         <div className="p-5 flex flex-col justify-center gap-2 border-l border-border min-w-[148px]">
-          {!isPast && !cancelled && (
+          <Hidden display={!isPast && !cancelled}>
             <>
-              {imminent && (
+              <Hidden display={imminent}>
                 <Button variant="primary" size="sm" className="w-full gap-1.5">
                   <Video className="size-3.5" />
                   Join visit
                 </Button>
-              )}
+              </Hidden>
               <Button
                 variant="secondary"
                 size="sm"
@@ -308,8 +310,8 @@ function AppointmentCard({
                 Cancel
               </Button>
             </>
-          )}
-          {(isPast || cancelled) && (
+          </Hidden>
+          <Hidden display={isPast || cancelled}>
             <>
               <Button
                 variant="secondary"
@@ -319,7 +321,7 @@ function AppointmentCard({
               >
                 View doctor
               </Button>
-              {!cancelled && (
+              <Hidden display={!cancelled}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -328,9 +330,9 @@ function AppointmentCard({
                 >
                   Book again
                 </Button>
-              )}
+              </Hidden>
             </>
-          )}
+          </Hidden>
         </div>
       </div>
     </Card>
@@ -531,7 +533,7 @@ export function AppointmentsPage() {
         </Button>
       </div>
 
-      {error && (
+      <Hidden display={!!error}>
         <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-sm text-destructive mb-6">
           <AlertCircle className="size-4 shrink-0" />
           {error}
@@ -542,17 +544,17 @@ export function AppointmentsPage() {
             Retry
           </button>
         </div>
-      )}
+      </Hidden>
 
-      {loading && (
+      <Hidden display={loading}>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <AppointmentSkeleton key={i} />
           ))}
         </div>
-      )}
+      </Hidden>
 
-      {!loading && !error && (
+      <Hidden display={!loading && !error}>
         <>
           <TabBar
             tab={tab}
@@ -561,8 +563,8 @@ export function AppointmentsPage() {
             pastCount={past.length}
           />
 
-          {list.length === 0 ? (
-            tab === "upcoming" ? (
+          <Ternary condition={list.length === 0}>
+            <Ternary condition={tab === "upcoming"}>
               <EmptyState
                 icon={Calendar}
                 title="No appointments yet"
@@ -579,14 +581,12 @@ export function AppointmentsPage() {
                   </Button>
                 }
               />
-            ) : (
               <EmptyState
                 icon={Clock}
                 title="No past appointments"
                 body="Once you complete or cancel a visit, it will appear here."
               />
-            )
-          ) : (
+            </Ternary>
             <div className="flex flex-col gap-3">
               {list.map((appt) => (
                 <AppointmentCard
@@ -602,9 +602,9 @@ export function AppointmentsPage() {
                 />
               ))}
             </div>
-          )}
+          </Ternary>
         </>
-      )}
+      </Hidden>
 
       <CancelModal
         appointment={confirmCancel}
