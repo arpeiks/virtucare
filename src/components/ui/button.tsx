@@ -14,6 +14,10 @@ const buttonVariants = cva(
         danger: "bg-card text-destructive border-destructive hover:bg-card/80 hover:border-destructive/80",
         dangerFilled: "bg-destructive text-white border-destructive hover:bg-destructive/90 hover:border-destructive/90",
         link: "text-primary underline-offset-4 hover:underline border-transparent bg-transparent",
+        // shadcn compat aliases
+        default: "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary/90",
+        outline: "bg-card text-foreground border-ring hover:bg-card/80 hover:border-ring/80",
+        destructive: "bg-card text-destructive border-destructive hover:bg-card/80 hover:border-destructive/80",
       },
       size: {
         sm: "px-3.5 py-2 text-[13px] h-[34px] gap-2",
@@ -23,6 +27,9 @@ const buttonVariants = cva(
         "icon-sm": "size-[34px]",
         "icon-md": "size-[42px]",
         "icon-lg": "size-[50px]",
+        // shadcn compat aliases
+        default: "px-4.5 py-2.5 text-sm h-[42px] gap-2",
+        xs: "px-2.5 py-1.5 text-xs h-[28px] gap-1.5",
       },
     },
     defaultVariants: { size: "md", variant: "primary" },

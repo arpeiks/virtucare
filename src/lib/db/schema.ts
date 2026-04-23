@@ -7,6 +7,11 @@ export const doctor = pgTable("doctor", {
   subspecialty: text("subspecialty"),
   bio: text("bio"),
   imageUrl: text("image_url"),
+  rating: text("rating").notNull().default("4.8"),
+  reviews: integer("reviews").notNull().default(0),
+  years: integer("years").notNull().default(0),
+  location: text("location").notNull().default(""),
+  nextAvailable: text("next_available").notNull().default("Today"),
   // JSON-encoded availability: Record<number, string[]> keyed by day-of-week (0–6)
   slotsByDay: text("slots_by_day").notNull().default("{}"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

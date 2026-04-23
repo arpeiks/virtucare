@@ -1,32 +1,22 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronLeft, ChevronRight, Check, ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { BookingProgress } from "./booking-progress"
 import { StepDateTime } from "./step-date-time"
 import { StepReason } from "./step-reason"
 import { StepReview } from "./step-review"
 import { BookingSummary } from "./booking-summary"
-import { cn } from "@/lib/utils"
 
-// Mock data - replace with actual data
-const MOCK_DOCTOR = {
-  id: "1",
-  name: "Dr. Sarah Johnson",
-  specialty: "Family Medicine",
-  subspecialty: "Internal Medicine",
-  slotsByDay: {
-    0: [], // Sunday
-    1: ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"], // Monday
-    2: ["09:00", "10:00", "11:00", "14:00", "15:00"], // Tuesday
-    3: ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"], // Wednesday
-    4: ["09:00", "10:00", "11:00", "14:00", "15:00"], // Thursday
-    5: ["09:00", "10:00", "11:00"], // Friday
-    6: [], // Saturday
-  }
+export interface Doctor {
+  id: string
+  name: string
+  specialty: string
+  subspecialty?: string | null
+  imageUrl?: string | null
+  slotsByDay: Record<number, string[]>
 }
 
 interface BookingPageProps {
@@ -34,9 +24,9 @@ interface BookingPageProps {
   initialDate?: string
   initialTime?: string
   editingId?: string
-  slotStyle?: 'chips' | 'list'
+  slotStyle?: "chips" | "list"
   onBack?: () => void
-  onConfirm?: (appointment: any) => void
+  onConfirm?: () => void
 }
 
 export function BookingPage({
@@ -44,38 +34,79 @@ export function BookingPage({
   initialDate,
   initialTime,
   editingId,
-  slotStyle = 'chips',
+  slotStyle = "chips",
   onBack,
-  onConfirm
+  onConfirm,
 }: BookingPageProps) {
-  const doctor = MOCK_DOCTOR // In real app, fetch by doctorId
-  
+  const [doctor, setDoctor] = useState<Doctor | null>(null)
+  const [loadingDoctor, setLoadingDoctor] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const [step, setStep] = useState(1)
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     initialDate ? new Date(initialDate) : null
   )
-  const [selectedTime, setSelectedTime] = useState(initialTime || '')
-  const [reason, setReason] = useState('')
-  const [visitType, setVisitType] = useState('Video visit')
+  const [selectedTime, setSelectedTime] = useState(initialTime ?? "")
+  const [reason, setReason] = useState("")
+  const [visitType, setVisitType] = useState("Video visit")
 
   const canProceed1 = selectedDate && selectedTime
   const canProceed2 = reason.trim().length >= 10
 
-  const handleSubmit = () => {
-    if (!selectedDate || !selectedTime || !reason.trim()) return
-
-    const appointment = {
-      id: editingId || `appt-${Date.now()}`,
-      doctorId,
-      date: selectedDate.toISOString(),
-      time: selectedTime,
-      reason: reason.trim(),
-      createdAt: new Date().toISOString(),
-      status: 'confirmed',
-      visitType,
+  useEffect(() => {
+    async function fetchDoctor() {
+      try {
+        const res = await fetch(`/api/doctors/${doctorId}`)
+        if (!res.ok) throw new Error("Doctor not found")
+        const data = await res.json()
+        setDoctor(data)
+      } catch {
+        setError("Could not load doctor information. Please go back and try again.")
+      } finally {
+        setLoadingDoctor(false)
+      }
     }
+    fetchDoctor()
+  }, [doctorId])
 
-    onConfirm?.(appointment)
+  const handleSubmit = async () => {
+    if (!selectedDate || !selectedTime || !reason.trim() || !doctor) return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const dateStr = selectedDate.toISOString().split("T")[0]
+
+      const method = editingId ? "PATCH" : "POST"
+      const url = editingId
+        ? `/api/appointments/${editingId}`
+        : "/api/appointments"
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          doctorId: doctor.id,
+          date: dateStr,
+          time: selectedTime,
+          reason: reason.trim(),
+          visitType,
+        }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? "Failed to save appointment")
+      }
+
+      onConfirm?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleBack = () => {
@@ -92,6 +123,31 @@ export function BookingPage({
     } else {
       handleSubmit()
     }
+  }
+
+  if (loadingDoctor) {
+    return (
+      <div className="p-7 max-w-[1040px] mx-auto">
+        <div className="h-8 w-64 bg-muted animate-pulse rounded-md mb-7" />
+        <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-7">
+          <div className="h-96 bg-muted animate-pulse rounded-xl" />
+          <div className="h-64 bg-muted animate-pulse rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !doctor) {
+    return (
+      <div className="p-7 max-w-[1040px] mx-auto">
+        <div className="p-6 bg-destructive/10 border border-destructive/20 rounded-xl text-sm text-destructive">
+          {error}
+        </div>
+        <Button variant="ghost" className="mt-4 gap-2" onClick={onBack}>
+          <ArrowLeft size={14} /> Go back
+        </Button>
+      </div>
+    )
   }
 
   if (!doctor) return null
@@ -114,7 +170,7 @@ export function BookingPage({
               slotStyle={slotStyle}
             />
           )}
-          
+
           {step === 2 && (
             <StepReason
               reason={reason}
@@ -123,7 +179,7 @@ export function BookingPage({
               setVisitType={setVisitType}
             />
           )}
-          
+
           {step === 3 && (
             <StepReview
               doctor={doctor}
@@ -135,15 +191,23 @@ export function BookingPage({
             />
           )}
 
+          {/* Submission error */}
+          {error && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           {/* Navigation */}
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
             <Button
               variant="ghost"
               onClick={handleBack}
+              disabled={submitting}
               className="gap-2"
             >
               <ArrowLeft size={14} />
-              {step === 1 ? 'Back to profile' : 'Back'}
+              {step === 1 ? "Back to profile" : "Back"}
             </Button>
 
             {step < 3 ? (
@@ -161,10 +225,15 @@ export function BookingPage({
                 variant="primary"
                 size="lg"
                 onClick={handleSubmit}
+                disabled={submitting}
                 className="gap-2"
               >
-                {editingId ? 'Update appointment' : 'Confirm booking'}
-                <Check size={16} />
+                {submitting
+                  ? "Saving…"
+                  : editingId
+                  ? "Update appointment"
+                  : "Confirm booking"}
+                {!submitting && <Check size={16} />}
               </Button>
             )}
           </div>

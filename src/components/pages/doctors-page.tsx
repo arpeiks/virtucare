@@ -1,20 +1,475 @@
 "use client";
 
-export function DoctorsPage() {
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Star, Search, ChevronDown, Calendar, ArrowRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+  subspecialty: string | null;
+  bio: string | null;
+  imageUrl: string | null;
+  rating: string;
+  reviews: number;
+  years: number;
+  location: string;
+  nextAvailable: string;
+  slotsByDay: Record<number, string[]>;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatTime(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+// ─── SelectChip ───────────────────────────────────────────────────────────────
+
+interface SelectOption {
+  v: string;
+  l: string;
+}
+
+function SelectChip({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: (string | SelectOption)[];
+  onChange: (v: string) => void;
+}) {
+  const opts: SelectOption[] = options.map((o) =>
+    typeof o === "string" ? { v: o, l: o } : o
+  );
+  const current = opts.find((o) => o.v === value) || opts[0];
+
   return (
-    <div className="p-10">
-      <div className="max-w-4xl">
-        <h1 className="text-2xl font-semibold text-foreground mb-2">Find a Doctor</h1>
-        <p className="text-muted-foreground mb-8">
-          Browse our network of healthcare professionals and book appointments.
-        </p>
-        
-        <div className="bg-card border border-border rounded-xl p-8 text-center">
-          <p className="text-muted-foreground">
-            Doctors listing will be implemented here
-          </p>
+    <label className="relative inline-flex items-center gap-2 h-[42px] px-3.5 bg-background border border-border rounded-[10px] text-[13px] text-foreground cursor-pointer hover:border-ring/80 transition-colors">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{current.l}</span>
+      <ChevronDown className="size-3.5 text-muted-foreground" />
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full"
+      >
+        {opts.map((o) => (
+          <option key={o.v} value={o.v}>
+            {o.l}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+// ─── DoctorCard ───────────────────────────────────────────────────────────────
+
+function DoctorCard({
+  doctor,
+  onView,
+  onBook,
+}: {
+  doctor: Doctor;
+  onView: () => void;
+  onBook: () => void;
+}) {
+  const today = new Date();
+  const dow = today.getDay();
+  const todaysSlots = doctor.slotsByDay[dow] ?? [];
+  const tomorrowSlots = doctor.slotsByDay[(dow + 1) % 7] ?? [];
+  const displaySlots = todaysSlots.length > 0 ? todaysSlots : tomorrowSlots;
+  const slotsLabel = todaysSlots.length > 0 ? "Today" : "Tomorrow";
+
+  const locationCity = doctor.location
+    ? doctor.location.includes("•")
+      ? doctor.location.split("•")[1]?.trim()
+      : doctor.location
+    : null;
+
+  return (
+    <Card
+      className="cursor-pointer hover:border-ring/60 hover:shadow-md transition-all duration-150 overflow-hidden p-0"
+      onClick={onView}
+    >
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex gap-4">
+          <Avatar size="lg" className="size-14 shrink-0">
+            {doctor.imageUrl && <AvatarImage src={doctor.imageUrl} alt={doctor.name} />}
+            <AvatarFallback className="text-sm font-medium bg-secondary text-secondary-foreground">
+              {getInitials(doctor.name)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start gap-2">
+              <div>
+                <div className="font-serif text-[22px] text-foreground leading-tight tracking-tight">
+                  {doctor.name}
+                </div>
+                <div className="text-[13px] text-muted-foreground mt-1">
+                  {doctor.specialty}
+                  {doctor.subspecialty ? ` · ${doctor.subspecialty}` : ""}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-[13px] text-foreground shrink-0">
+                <Star className="size-3.5 fill-primary text-primary" />
+                <span className="font-medium">{doctor.rating}</span>
+                <span className="text-muted-foreground">({doctor.reviews})</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-2.5 text-[12px] text-muted-foreground">
+              {doctor.years > 0 && <span>{doctor.years} yrs experience</span>}
+              {doctor.years > 0 && locationCity && <span>·</span>}
+              {locationCity && <span>{locationCity}</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-border my-5" />
+
+        {/* Slots */}
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+            {slotsLabel}
+          </div>
+          {displaySlots.length > 4 && (
+            <div className="text-[12px] text-muted-foreground">
+              +{displaySlots.length - 4} more
+            </div>
+          )}
+        </div>
+
+        {displaySlots.length === 0 ? (
+          <div className="text-[13px] text-muted-foreground py-2.5">
+            No openings {slotsLabel.toLowerCase()} —{" "}
+            <span className="text-primary">see full schedule</span>
+          </div>
+        ) : (
+          <div className="flex gap-2 flex-wrap">
+            {displaySlots.slice(0, 4).map((s) => (
+              <button
+                key={s}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBook();
+                }}
+                className="px-3 py-2 border border-border rounded-lg text-[13px] text-foreground bg-background hover:border-primary hover:bg-secondary transition-colors duration-150 cursor-pointer"
+              >
+                {formatTime(s)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2.5 mt-5">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+          >
+            View profile
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBook();
+            }}
+          >
+            Book appointment
+            <ArrowRight className="size-3.5" />
+          </Button>
         </div>
       </div>
+    </Card>
+  );
+}
+
+// ─── EmptyState ───────────────────────────────────────────────────────────────
+
+function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 p-16 bg-card border border-dashed border-ring rounded-xl text-center">
+      <div className="size-14 rounded-full bg-background grid place-items-center text-muted-foreground">
+        <Calendar className="size-6" />
+      </div>
+      <div className="font-serif text-2xl text-foreground tracking-tight">{title}</div>
+      <div className="text-[14px] text-muted-foreground max-w-md leading-relaxed">{body}</div>
+      {action && <div className="mt-1.5">{action}</div>}
+    </div>
+  );
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function DoctorCardSkeleton() {
+  return (
+    <Card className="p-6 animate-pulse">
+      <div className="flex gap-4">
+        <div className="size-14 rounded-full bg-muted shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-5 bg-muted rounded w-2/3" />
+          <div className="h-3.5 bg-muted rounded w-1/2" />
+          <div className="h-3 bg-muted rounded w-1/3" />
+        </div>
+      </div>
+      <div className="h-px bg-border my-5" />
+      <div className="flex gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-9 w-20 bg-muted rounded-lg" />
+        ))}
+      </div>
+      <div className="flex gap-2.5 mt-5">
+        <div className="h-[34px] w-28 bg-muted rounded-[10px]" />
+        <div className="h-[34px] w-36 bg-muted rounded-[10px]" />
+      </div>
+    </Card>
+  );
+}
+
+// ─── DoctorsPage ──────────────────────────────────────────────────────────────
+
+const SPECIALTIES_PLACEHOLDER = ["All specialties"];
+
+export function DoctorsPage() {
+  const router = useRouter();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [query, setQuery] = useState("");
+  const [specialty, setSpecialty] = useState("All specialties");
+  const [availability, setAvailability] = useState("anytime");
+  const [sort, setSort] = useState("rating");
+
+  useEffect(() => {
+    fetch("/api/doctors")
+      .then((r) => r.json())
+      .then((data) => {
+        setDoctors(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load doctors. Please try again.");
+        setLoading(false);
+      });
+  }, []);
+
+  const specialties = useMemo(() => {
+    const unique = Array.from(new Set(doctors.map((d) => d.specialty)));
+    return ["All specialties", ...unique.sort()];
+  }, [doctors]);
+
+  const availableToday = useMemo(
+    () => doctors.filter((d) => d.nextAvailable === "Today").length,
+    [doctors]
+  );
+
+  const filtered = useMemo(() => {
+    let list = doctors.filter((d) => {
+      if (specialty !== "All specialties" && d.specialty !== specialty)
+        return false;
+      if (query) {
+        const q = query.toLowerCase();
+        if (
+          !d.name.toLowerCase().includes(q) &&
+          !d.specialty.toLowerCase().includes(q) &&
+          !(d.subspecialty ?? "").toLowerCase().includes(q)
+        )
+          return false;
+      }
+      if (availability === "today" && d.nextAvailable !== "Today") return false;
+      if (
+        availability === "week" &&
+        d.nextAvailable !== "Today" &&
+        d.nextAvailable !== "Tomorrow"
+      )
+        return false;
+      return true;
+    });
+
+    if (sort === "rating")
+      list = [...list].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+    if (sort === "experience")
+      list = [...list].sort((a, b) => b.years - a.years);
+    if (sort === "availability")
+      list = [...list].sort((a) => (a.nextAvailable === "Today" ? -1 : 1));
+
+    return list;
+  }, [doctors, query, specialty, availability, sort]);
+
+  const clearFilters = () => {
+    setQuery("");
+    setSpecialty("All specialties");
+    setAvailability("anytime");
+  };
+
+  return (
+    <div className="px-10 py-8 pb-16 max-w-[1360px] mx-auto">
+      {/* Hero */}
+      <div className="flex items-end justify-between gap-10 mb-8">
+        <div className="max-w-2xl">
+          <div className="text-[12px] tracking-widest uppercase text-primary mb-3 font-medium">
+            Book a visit
+          </div>
+          <h1 className="font-serif text-[52px] leading-[1.05] font-normal text-foreground tracking-tight m-0">
+            Find the right doctor,
+            <br />
+            <em className="italic text-primary not-italic">on your schedule.</em>
+          </h1>
+          <p className="text-[15px] text-muted-foreground mt-4 max-w-lg leading-relaxed">
+            Board-certified physicians across primary care and specialties. Most
+            patients are seen within 24 hours.
+          </p>
+        </div>
+
+        {!loading && availableToday > 0 && (
+          <Badge
+            variant="secondary"
+            className="h-7 px-3 text-[13px] gap-1.5 text-success border-success/20 bg-success/10 shrink-0"
+          >
+            <span className="size-1.5 rounded-full bg-success inline-block" />
+            {availableToday} available today
+          </Badge>
+        )}
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex gap-3 items-center p-3 bg-card border border-border rounded-[14px] mb-5 flex-wrap">
+        {/* Search */}
+        <div className="flex-1 min-w-[280px] flex items-center gap-2.5 px-3.5 h-[42px] bg-background border border-border rounded-[10px] focus-within:border-ring transition-colors">
+          <Search className="size-4 text-muted-foreground shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or specialty"
+            className="flex-1 border-none bg-transparent outline-none text-[14px] text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <SelectChip
+          label="Specialty"
+          value={specialty}
+          options={loading ? SPECIALTIES_PLACEHOLDER : specialties}
+          onChange={setSpecialty}
+        />
+        <SelectChip
+          label="Available"
+          value={availability}
+          options={[
+            { v: "anytime", l: "Anytime" },
+            { v: "today", l: "Today" },
+            { v: "week", l: "This week" },
+          ]}
+          onChange={setAvailability}
+        />
+        <SelectChip
+          label="Sort"
+          value={sort}
+          options={[
+            { v: "rating", l: "Top rated" },
+            { v: "experience", l: "Most experience" },
+            { v: "availability", l: "Soonest" },
+          ]}
+          onChange={setSort}
+        />
+      </div>
+
+      {/* Result meta */}
+      {!loading && !error && (
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-[13px] text-muted-foreground">
+            <span className="text-foreground font-medium">{filtered.length}</span>{" "}
+            {filtered.length === 1 ? "doctor" : "doctors"} match your filters
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="p-6 bg-destructive/10 border border-destructive/20 rounded-xl text-[14px] text-destructive text-center">
+          {error}
+        </div>
+      )}
+
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <DoctorCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
+
+      {/* Doctor grid */}
+      {!loading && !error && (
+        <>
+          {filtered.length === 0 ? (
+            <EmptyState
+              title="No doctors match your filters"
+              body="Try broadening your search or clearing filters to see more options."
+              action={
+                <Button variant="secondary" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4">
+              {filtered.map((d) => (
+                <DoctorCard
+                  key={d.id}
+                  doctor={d}
+                  onView={() => router.push(`/booking?doctorId=${d.id}`)}
+                  onBook={() => router.push(`/booking?doctorId=${d.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
