@@ -46,7 +46,6 @@ export function BookingSummary({
 }: BookingSummaryProps) {
   return (
     <Card className="p-6">
-      {/* Doctor Info */}
       <div className="flex gap-3.5 items-center mb-4.5">
         <Avatar className="h-12 w-12">
           <AvatarImage src="" />
@@ -66,7 +65,6 @@ export function BookingSummary({
 
       <Separator className="my-4" />
 
-      {/* Summary Details */}
       <div className="space-y-3">
         <SummaryRow 
           label="Date" 
@@ -90,7 +88,6 @@ export function BookingSummary({
         />
       </div>
 
-      {/* Reason */}
       {reason && (
         <>
           <Separator className="my-3" />

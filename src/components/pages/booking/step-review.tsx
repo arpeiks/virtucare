@@ -57,7 +57,6 @@ export function StepReview({
         Confirm the details below. You'll get a reminder 24 hours before.
       </p>
 
-      {/* Doctor Info */}
       <div className="mt-6 p-5 bg-background border border-border rounded-xl">
         <div className="flex gap-4 items-center">
           <Avatar className="h-13 w-13">
@@ -78,7 +77,6 @@ export function StepReview({
         </div>
       </div>
 
-      {/* Appointment Details */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         <ReviewRow
           icon={Calendar}
@@ -102,7 +100,6 @@ export function StepReview({
         />
       </div>
 
-      {/* Reason */}
       <div className="mt-4 p-4 border border-border rounded-xl bg-card">
         <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5">
           Reason for visit
@@ -112,7 +109,6 @@ export function StepReview({
         </div>
       </div>
 
-      {/* Consent Notice */}
       <div className="mt-5 p-3.5 rounded-lg bg-primary/5 flex gap-2.5 items-start">
         <Info size={16} className="text-primary mt-0.5 flex-shrink-0" />
         <div className="text-xs text-primary leading-relaxed">

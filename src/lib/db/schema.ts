@@ -12,7 +12,6 @@ export const doctor = pgTable("doctor", {
   years: integer("years").notNull().default(0),
   location: text("location").notNull().default(""),
   nextAvailable: text("next_available").notNull().default("Today"),
-  // JSON-encoded availability: Record<number, string[]> keyed by day-of-week (0–6)
   slotsByDay: text("slots_by_day").notNull().default("{}"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -26,11 +25,11 @@ export const appointment = pgTable("appointment", {
   doctorId: text("doctor_id")
     .notNull()
     .references(() => doctor.id, { onDelete: "cascade" }),
-  date: text("date").notNull(), // ISO date string YYYY-MM-DD
-  time: text("time").notNull(), // HH:MM
+  date: text("date").notNull(),
+  time: text("time").notNull(),
   reason: text("reason").notNull(),
   visitType: text("visit_type").notNull().default("Video visit"),
-  status: text("status").notNull().default("confirmed"), // confirmed | cancelled | completed
+  status: text("status").notNull().default("confirmed"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

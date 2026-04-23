@@ -50,8 +50,6 @@ function getInitials(name: string) {
     .join("");
 }
 
-// ─── Skeleton loader ────────────────────────────────────────────────────────
-
 function DoctorDetailSkeleton() {
   return (
     <div className="p-8 pb-16 max-w-[1100px] mx-auto">
@@ -80,8 +78,6 @@ function DoctorDetailSkeleton() {
   );
 }
 
-// ─── Section wrapper ─────────────────────────────────────────────────────────
-
 function Section({
   icon: Icon,
   title,
@@ -104,8 +100,6 @@ function Section({
   );
 }
 
-// ─── Stat pill ───────────────────────────────────────────────────────────────
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -116,8 +110,6 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-// ─── Main component ──────────────────────────────────────────────────────────
 
 interface DoctorDetailPageProps {
   doctorId: string;
@@ -167,7 +159,6 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
 
   return (
     <div className="p-8 pb-16 max-w-[1100px] mx-auto">
-      {/* Back */}
       <Button
         variant="ghost"
         size="sm"
@@ -179,9 +170,7 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8">
-        {/* ── Left: profile ── */}
         <div>
-          {/* Header */}
           <div className="flex gap-5 items-flex-start">
             <Avatar className="h-[88px] w-[88px] flex-shrink-0 text-xl font-medium">
               <AvatarImage src={doctor.imageUrl ?? ""} />
@@ -191,7 +180,6 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
             </Avatar>
 
             <div className="flex-1 min-w-0">
-              {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-2.5">
                 <Badge variant="secondary">{doctor.specialty}</Badge>
                 {doctor.nextAvailable === "Today" && (
@@ -204,19 +192,16 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
                 )}
               </div>
 
-              {/* Name */}
               <h1 className="font-serif text-4xl text-foreground tracking-tight leading-[1.05] mb-1.5">
                 {doctor.name}
               </h1>
 
-              {/* Subspecialty */}
               {doctor.subspecialty && (
                 <p className="text-sm text-muted-foreground">
                   {doctor.subspecialty}
                 </p>
               )}
 
-              {/* Stats row */}
               <div className="flex flex-wrap items-center gap-5 mt-4">
                 <div className="flex items-center gap-1.5 text-sm">
                   <Star className="h-4 w-4 fill-primary text-primary" />
@@ -242,14 +227,12 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
 
           <Separator className="mt-8" />
 
-          {/* About */}
           {doctor.bio && (
             <Section icon={Briefcase} title="About">
               <p className="text-sm text-foreground leading-relaxed">{doctor.bio}</p>
             </Section>
           )}
 
-          {/* Availability summary */}
           <Section icon={CalendarCheck} title="Availability">
             <div className="flex flex-wrap gap-2">
               {available > 0 ? (
@@ -272,11 +255,9 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
           </Section>
         </div>
 
-        {/* ── Right: booking sidebar ── */}
         <div className="lg:sticky lg:top-5 h-fit">
           <Card>
             <CardContent className="p-6">
-              {/* Next available */}
               <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
                 Next available
               </div>
@@ -286,7 +267,6 @@ export function DoctorDetailPage({ doctorId }: DoctorDetailPageProps) {
 
               <Separator className="my-5" />
 
-              {/* Visit info */}
               <div className="text-xs text-muted-foreground mb-3">
                 Typical visit:{" "}
                 <span className="text-foreground font-medium">

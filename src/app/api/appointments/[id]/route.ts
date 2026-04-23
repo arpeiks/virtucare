@@ -19,9 +19,7 @@ export async function PATCH(
     const body = await req.json();
     const { date, time, reason, visitType, status } = body;
 
-    // If date or time is being changed, validate them
     if (date || time) {
-      // Fetch the existing appointment to get the full date+time for comparison
       const [existing] = await db
         .select()
         .from(appointment)
@@ -35,7 +33,6 @@ export async function PATCH(
       const newDate = date ?? existing.date;
       const newTime = time ?? existing.time;
 
-      // Reject past dates
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const appointmentDate = new Date(newDate);
@@ -44,7 +41,6 @@ export async function PATCH(
         return NextResponse.json({ error: "Cannot book an appointment in the past" }, { status: 400 });
       }
 
-      // Reject if the slot is already taken by another confirmed appointment (excluding this one)
       const [conflict] = await db
         .select({ id: appointment.id })
         .from(appointment)

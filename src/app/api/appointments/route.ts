@@ -11,8 +11,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const doctorIdParam = searchParams.get("doctorId");
 
-    // When ?doctorId= is provided, return booked (confirmed) slots for that doctor
-    // so the booking UI can grey them out. No auth restriction — availability is public info.
     if (doctorIdParam) {
       const rows = await db
         .select({
@@ -75,7 +73,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Reject past appointments, taking both date and time into account.
     const appointmentDateTime = parse(
       `${date} ${time}`,
       "yyyy-MM-dd HH:mm",
@@ -85,7 +82,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cannot book an appointment in the past" }, { status: 400 });
     }
 
-    // Reject if the slot is already taken by another confirmed appointment
     const [conflict] = await db
       .select({ id: appointment.id })
       .from(appointment)

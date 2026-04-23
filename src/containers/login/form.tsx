@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
   InputGroupText,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupButton,
 } from "@/components/ui/input-group";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -19,9 +19,9 @@ interface LoginFormProps {
 
 export function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

@@ -55,7 +55,6 @@ export function StepReason({
         Share a quick note so your doctor can prepare. Details stay private.
       </p>
 
-      {/* Visit Type */}
       <div className="mt-6">
         <Label className="text-sm font-medium mb-2.5 block">Visit type</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -96,7 +95,6 @@ export function StepReason({
         </div>
       </div>
 
-      {/* Quick Pick */}
       <div className="mt-6">
         <Label className="text-sm font-medium mb-2.5 block">Quick pick</Label>
         <div className="flex gap-2 flex-wrap">
@@ -114,7 +112,6 @@ export function StepReason({
         </div>
       </div>
 
-      {/* Reason Textarea */}
       <div className="mt-6">
         <Label className="text-sm font-medium mb-2.5 block">
           Reason for visit

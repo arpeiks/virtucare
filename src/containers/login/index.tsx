@@ -22,9 +22,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen w-full grid" style={{ gridTemplateColumns: "minmax(0, 480px) 1fr" }}>
-      {/* Left: form */}
       <div className="flex flex-col px-14 py-10 min-h-screen bg-background">
-        {/* Brand row */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-[8px] bg-primary text-primary-foreground grid place-items-center font-serif text-xl leading-none">
             v
@@ -51,9 +49,7 @@ const Login = () => {
         <div className="flex-1" />
       </div>
 
-      {/* Right: brand panel */}
       <div className="relative bg-muted border-l border-border overflow-hidden flex-col p-14 hidden lg:flex">
-        {/* Subtle grid */}
         <svg aria-hidden width="100%" height="100%" className="absolute inset-0 opacity-50 pointer-events-none">
           <defs>
             <pattern id="lg-grid" width="32" height="32" patternUnits="userSpaceOnUse">

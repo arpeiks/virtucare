@@ -78,7 +78,6 @@ export function BookingPage({
           setBookedSlots(data)
         }
       } catch {
-        // Non-critical — if this fails, slots just won't be greyed out
       }
     }
 
@@ -170,11 +169,9 @@ export function BookingPage({
 
   return (
     <div className="p-7 pb-15 max-w-[1040px] mx-auto">
-      {/* Progress */}
       <BookingProgress currentStep={step} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-7 mt-7">
-        {/* Main Content */}
         <Card className="p-6">
           {step === 1 && (
             <StepDateTime
@@ -208,14 +205,12 @@ export function BookingPage({
             />
           )}
 
-          {/* Submission error */}
           {error && (
             <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
               {error}
             </div>
           )}
 
-          {/* Navigation */}
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
             <Button
               variant="ghost"
@@ -256,7 +251,6 @@ export function BookingPage({
           </div>
         </Card>
 
-        {/* Summary Sidebar */}
         <div className="lg:sticky lg:top-5 h-fit">
           <BookingSummary
             doctor={doctor}

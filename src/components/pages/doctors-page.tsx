@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// ─── Booked-slot helpers ──────────────────────────────────────────────────────
-
 type BookedSlot = { date: string; time: string };
 
 function toDateStr(date: Date) {
@@ -27,10 +25,6 @@ function toDateStr(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
-/**
- * Given a doctor's slotsByDay and the set of already-booked slots,
- * return only the slots for `date` that are neither in the past nor booked.
- */
 function availableSlotsForDate(
   date: Date,
   slotsByDay: Record<number, string[]>,
@@ -55,10 +49,6 @@ function availableSlotsForDate(
   });
 }
 
-/**
- * Returns true if the doctor has at least one available (non-past, non-booked)
- * slot on the given date.
- */
 function hasAvailableSlotOnDate(
   date: Date,
   slotsByDay: Record<number, string[]>,
@@ -67,10 +57,6 @@ function hasAvailableSlotOnDate(
   return availableSlotsForDate(date, slotsByDay, bookedSet).length > 0;
 }
 
-/**
- * Returns true if the doctor has at least one available slot within the next
- * `days` calendar days (starting from today).
- */
 function hasAvailableSlotWithinDays(
   slotsByDay: Record<number, string[]>,
   bookedSet: Set<string>,
@@ -85,8 +71,6 @@ function hasAvailableSlotWithinDays(
   }
   return false;
 }
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Doctor {
   id: string;
@@ -103,8 +87,6 @@ interface Doctor {
   slotsByDay: Record<number, string[]>;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function formatTime(t: string) {
   const [h, m] = t.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
@@ -120,8 +102,6 @@ function getInitials(name: string) {
     .slice(0, 2)
     .toUpperCase();
 }
-
-// ─── SelectChip ───────────────────────────────────────────────────────────────
 
 interface SelectOption {
   v: string;
@@ -165,8 +145,6 @@ function SelectChip({
   );
 }
 
-// ─── DoctorCard ───────────────────────────────────────────────────────────────
-
 function DoctorCard({
   doctor,
   bookedSlots,
@@ -205,7 +183,6 @@ function DoctorCard({
       onClick={onView}
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex gap-4">
           <Avatar size="lg" className="size-14 shrink-0">
             {doctor.imageUrl && <AvatarImage src={doctor.imageUrl} alt={doctor.name} />}
@@ -240,10 +217,8 @@ function DoctorCard({
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px bg-border my-5" />
 
-        {/* Slots */}
         <div className="flex items-center justify-between mb-2.5">
           <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {slotsLabel}
@@ -277,7 +252,6 @@ function DoctorCard({
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex gap-2.5 mt-5">
           <Button
             variant="secondary"
@@ -306,8 +280,6 @@ function DoctorCard({
   );
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────────────────
-
 function EmptyState({
   title,
   body,
@@ -328,8 +300,6 @@ function EmptyState({
     </div>
   );
 }
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function DoctorCardSkeleton() {
   return (
@@ -356,8 +326,6 @@ function DoctorCardSkeleton() {
   );
 }
 
-// ─── DoctorsPage ──────────────────────────────────────────────────────────────
-
 const SPECIALTIES_PLACEHOLDER = ["All specialties"];
 
 export function DoctorsPage() {
@@ -365,7 +333,6 @@ export function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Map of doctorId → booked slots fetched from the API
   const [bookedSlotsByDoctor, setBookedSlotsByDoctor] = useState<
     Record<string, BookedSlot[]>
   >({});
@@ -381,8 +348,6 @@ export function DoctorsPage() {
         const r = await fetch("/api/doctors");
         const data: Doctor[] = await r.json();
 
-        // Fetch booked slots for every doctor in parallel (best-effort),
-        // before revealing the cards so slots are never shown then removed.
         const entries = await Promise.all(
           data.map(async (d) => {
             try {
@@ -448,7 +413,6 @@ export function DoctorsPage() {
           if (!hasAvailableSlotOnDate(today, d.slotsByDay, bookedSet))
             return false;
         } else {
-          // "week" — any slot in the next 7 days
           if (!hasAvailableSlotWithinDays(d.slotsByDay, bookedSet, 7))
             return false;
         }
@@ -474,7 +438,6 @@ export function DoctorsPage() {
 
   return (
     <div className="px-10 py-8 pb-16 max-w-[1360px] mx-auto">
-      {/* Hero */}
       <div className="flex items-end justify-between gap-10 mb-8">
         <div className="max-w-2xl">
           <div className="text-[12px] tracking-widest uppercase text-primary mb-3 font-medium">
@@ -502,9 +465,7 @@ export function DoctorsPage() {
         )}
       </div>
 
-      {/* Filter bar */}
       <div className="flex gap-3 items-center p-3 bg-card border border-border rounded-[14px] mb-5 flex-wrap">
-        {/* Search */}
         <div className="flex-1 min-w-[280px] flex items-center gap-2.5 px-3.5 h-[42px] bg-background border border-border rounded-[10px] focus-within:border-ring transition-colors">
           <Search className="size-4 text-muted-foreground shrink-0" />
           <input
@@ -543,7 +504,6 @@ export function DoctorsPage() {
         />
       </div>
 
-      {/* Result meta */}
       {!loading && !error && (
         <div className="flex justify-between items-center mb-4">
           <div className="text-[13px] text-muted-foreground">
@@ -553,14 +513,12 @@ export function DoctorsPage() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="p-6 bg-destructive/10 border border-destructive/20 rounded-xl text-[14px] text-destructive text-center">
           {error}
         </div>
       )}
 
-      {/* Loading skeletons */}
       {loading && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -569,7 +527,6 @@ export function DoctorsPage() {
         </div>
       )}
 
-      {/* Doctor grid */}
       {!loading && !error && (
         <>
           {filtered.length === 0 ? (

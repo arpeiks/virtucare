@@ -17,9 +17,8 @@ interface AppShellProps {
 export function AppShell({ children, user, onLogout }: AppShellProps) {
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
-  const [appointmentCount] = useState(0); // This would come from your appointment data
+  const [appointmentCount] = useState(0);
 
-  // Generate breadcrumbs based on current path
   const getBreadcrumbs = () => {
     if (pathname === '/') return ['Find a doctor'];
     if (pathname === '/appointments') return ['Appointments'];

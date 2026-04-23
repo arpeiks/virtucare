@@ -29,8 +29,6 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface AppointmentRow {
   id: string;
   date: string;
@@ -46,8 +44,6 @@ interface AppointmentRow {
   doctorSubspecialty?: string | null;
   doctorImageUrl?: string | null;
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDateLong(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -108,8 +104,6 @@ function hoursUntil(dateStr: string, time: string) {
   return (dt.getTime() - Date.now()) / (1000 * 60 * 60);
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
 function EmptyState({
   icon: Icon,
   title,
@@ -139,8 +133,6 @@ function EmptyState({
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
 function AppointmentSkeleton() {
   return (
     <Card className="p-0 overflow-hidden animate-pulse">
@@ -165,8 +157,6 @@ function AppointmentSkeleton() {
     </Card>
   );
 }
-
-// ─── Appointment Row ──────────────────────────────────────────────────────────
 
 function AppointmentCard({
   appt,
@@ -194,7 +184,6 @@ function AppointmentCard({
       )}
     >
       <div className="grid grid-cols-[140px_1fr_auto]">
-        {/* Date column */}
         <div
           className={cn(
             "p-6 flex flex-col justify-center items-center text-center border-r border-border rounded-l-xl",
@@ -232,9 +221,7 @@ function AppointmentCard({
           </div>
         </div>
 
-        {/* Details */}
         <div className="p-5 flex flex-col justify-center min-w-0">
-          {/* Status + visit type */}
           <div className="flex items-center gap-2.5 mb-3 flex-wrap">
             {cancelled ? (
               <Badge variant="destructive" className="text-xs">
@@ -267,7 +254,6 @@ function AppointmentCard({
             </span>
           </div>
 
-          {/* Doctor */}
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="size-9 shrink-0">
               {appt.doctorImageUrl && (
@@ -288,14 +274,12 @@ function AppointmentCard({
             </div>
           </div>
 
-          {/* Reason */}
           <div className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
             <span className="text-subtle-foreground">Reason — </span>
             {appt.reason}
           </div>
         </div>
 
-        {/* Actions */}
         <div className="p-5 flex flex-col justify-center gap-2 border-l border-border min-w-[148px]">
           {!isPast && !cancelled && (
             <>
@@ -353,8 +337,6 @@ function AppointmentCard({
   );
 }
 
-// ─── Cancel Modal ─────────────────────────────────────────────────────────────
-
 function CancelModal({
   appointment,
   open,
@@ -411,8 +393,6 @@ function CancelModal({
   );
 }
 
-// ─── Tab Bar ──────────────────────────────────────────────────────────────────
-
 function TabBar({
   tab,
   setTab,
@@ -459,8 +439,6 @@ function TabBar({
   );
 }
 
-// ─── AppointmentsPage ─────────────────────────────────────────────────────────
-
 export function AppointmentsPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
@@ -497,7 +475,6 @@ export function AppointmentsPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to cancel");
-      // Mark as cancelled in local state (keep in list for "past" tab)
       setAppointments((prev) =>
         prev.map((a) =>
           a.id === confirmCancel.id ? { ...a, status: "cancelled" } : a
@@ -505,7 +482,6 @@ export function AppointmentsPage() {
       );
       setConfirmCancel(null);
     } catch {
-      // silently fail — user can retry
     } finally {
       setCancelling(false);
     }
@@ -526,7 +502,6 @@ export function AppointmentsPage() {
           (a) => a.status === "cancelled" || !isUpcoming(a.date, a.time)
         )
         .sort((a, b) => {
-          // Sort by updatedAt descending (most recent first)
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
         }),
     [appointments]
@@ -536,7 +511,6 @@ export function AppointmentsPage() {
 
   return (
     <div className="px-10 py-8 pb-16 max-w-[1100px] mx-auto">
-      {/* Header */}
       <div className="flex items-end justify-between gap-6 mb-8">
         <div>
           <div className="text-[12px] tracking-widest uppercase text-primary mb-2.5 font-medium">
@@ -557,7 +531,6 @@ export function AppointmentsPage() {
         </Button>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-sm text-destructive mb-6">
           <AlertCircle className="size-4 shrink-0" />
@@ -571,7 +544,6 @@ export function AppointmentsPage() {
         </div>
       )}
 
-      {/* Loading */}
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -580,7 +552,6 @@ export function AppointmentsPage() {
         </div>
       )}
 
-      {/* Content */}
       {!loading && !error && (
         <>
           <TabBar
@@ -635,7 +606,6 @@ export function AppointmentsPage() {
         </>
       )}
 
-      {/* Cancel Modal */}
       <CancelModal
         appointment={confirmCancel}
         open={!!confirmCancel}

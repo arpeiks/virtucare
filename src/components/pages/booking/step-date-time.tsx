@@ -23,7 +23,6 @@ interface StepDateTimeProps {
   bookedSlots?: { date: string; time: string }[]
 }
 
-// Utility functions
 const addDays = (date: Date, days: number) => {
   const result = new Date(date)
   result.setDate(result.getDate() + days)
@@ -79,7 +78,6 @@ export function StepDateTime({
 
   const toDateStr = (date: Date) => format(date, "yyyy-MM-dd")
 
-  // Returns all slots for a date, each with a disabled reason if applicable
   const slotsForDate = (date: Date): { time: string; disabled: boolean; reason?: string }[] => {
     const all = doctor.slotsByDay[date.getDay()] || []
     const dateStr = toDateStr(date)
@@ -90,7 +88,6 @@ export function StepDateTime({
       if (bookedSet.has(`${dateStr}|${slot}`)) {
         return { time: slot, disabled: true, reason: 'booked' }
       }
-      // For today, also disable slots whose time has already passed
       if (isToday) {
         const [h, m] = slot.split(':').map(Number)
         const slotTime = new Date(date)
@@ -103,7 +100,6 @@ export function StepDateTime({
     })
   }
 
-  // Available (non-disabled) slot count — used to decide if a day cell is selectable
   const availableCount = (date: Date) => slotsForDate(date).filter(s => !s.disabled).length
 
   const canGoBack = weekStart > today
@@ -117,7 +113,6 @@ export function StepDateTime({
         Available in the next two weeks. All times in your local time zone.
       </p>
 
-      {/* Week Navigation */}
       <div className="flex items-center justify-between mt-6 mb-3">
         <div className="text-sm text-muted-foreground">
           {formatDateShort(days[0])} — {formatDateShort(days[days.length - 1])}
@@ -141,7 +136,6 @@ export function StepDateTime({
         </div>
       </div>
 
-      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-2">
         {days.slice(0, 7).map(date => {
           const avail = availableCount(date)
@@ -188,7 +182,6 @@ export function StepDateTime({
         })}
       </div>
 
-      {/* Time Slots */}
       <div className="mt-8">
         <h3 className="font-serif text-[22px] text-foreground mb-0 font-normal tracking-tight">
           {selectedDate 
@@ -270,7 +263,6 @@ export function StepDateTime({
               )
             }
 
-            // Chips style
             return (
               <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2">
                 {slots.map(({ time: slot, disabled }) => (

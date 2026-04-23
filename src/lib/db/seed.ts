@@ -79,12 +79,12 @@ function generateSlotsByDay(): string {
   const slots: Record<number, string[]> = {};
   for (let day = 0; day < 7; day++) {
     const daySlots: string[] = [];
-    const numSlots = Math.floor(Math.random() * 8) + 4; // 4-11 slots per day
-    const startHour = 8 + Math.floor(Math.random() * 3); // Start between 8-10 AM
+    const numSlots = Math.floor(Math.random() * 8) + 4;
+    const startHour = 8 + Math.floor(Math.random() * 3);
     
     for (let i = 0; i < numSlots; i++) {
       const hour = startHour + i;
-      if (hour >= 17) break; // Don't go past 5 PM
+      if (hour >= 17) break;
       const minutes = Math.random() > 0.5 ? "00" : "30";
       daySlots.push(`${hour.toString().padStart(2, "0")}:${minutes}`);
     }
@@ -99,11 +99,11 @@ function generateRating(): string {
 }
 
 function generateReviews(): number {
-  return Math.floor(Math.random() * 500) + 50; // 50-549 reviews
+  return Math.floor(Math.random() * 500) + 50;
 }
 
 function generateYears(): number {
-  return Math.floor(Math.random() * 25) + 5; // 5-29 years
+  return Math.floor(Math.random() * 25) + 5;
 }
 
 function generateBio(specialty: string, subspecialty?: string): string {
@@ -120,7 +120,6 @@ async function seed() {
   let doctorIndex = 0;
 
   for (const { specialty, subspecialties } of specialties) {
-    // Create 5 doctors per specialty
     for (let i = 0; i < 5; i++) {
       const firstName = firstNames[doctorIndex % firstNames.length];
       const lastName = lastNames[doctorIndex % lastNames.length];
@@ -152,7 +151,6 @@ async function seed() {
     await db.insert(schema.doctor).values(doctors);
     console.log(`✅ Successfully seeded ${doctors.length} doctors`);
 
-    // Display some stats
     const specialtyCounts = doctors.reduce((acc, doc) => {
       acc[doc.specialty] = (acc[doc.specialty] || 0) + 1;
       return acc;

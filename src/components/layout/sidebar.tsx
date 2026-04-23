@@ -70,7 +70,6 @@ export function Sidebar({ appointmentCount = 0, user, onLogout }: SidebarProps) 
 
   return (
     <aside className="w-[260px] bg-background border-r border-border p-[18px] flex flex-col flex-shrink-0">
-      {/* Brand */}
       <div className="flex items-center gap-2.5 px-1.5 pb-5.5">
         <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-serif text-xl leading-none">
           v
@@ -83,14 +82,12 @@ export function Sidebar({ appointmentCount = 0, user, onLogout }: SidebarProps) 
         </div>
       </div>
 
-      {/* Primary Navigation */}
       <div className="flex flex-col gap-1">
         {primaryItems.map(item => (
           <NavItem key={item.id} item={item} active={isActive(item.href)} />
         ))}
       </div>
 
-      {/* More Section */}
       <div className="mx-2.5 my-6">
         <div className="text-[11px] font-semibold text-muted-foreground tracking-wider uppercase">
           More
@@ -105,7 +102,6 @@ export function Sidebar({ appointmentCount = 0, user, onLogout }: SidebarProps) 
 
       <div className="flex-1" />
 
-      {/* User Profile */}
       <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
         <Avatar className="h-9 w-9">
           <AvatarImage src="" />
