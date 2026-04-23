@@ -1,11 +1,11 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Providers } from "@/providers";
-import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { Figtree, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 
-const inter = Inter({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-sans",
   fallback: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
 });
 
@@ -35,7 +35,7 @@ const RootLayout = ({ children }: RootLayoutProps) => (
   <html
     lang="en"
     suppressHydrationWarning
-    className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} h-full antialiased`}
+    className={`${figtree.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} h-full antialiased`}
   >
     <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
       <Providers>{children}</Providers>
