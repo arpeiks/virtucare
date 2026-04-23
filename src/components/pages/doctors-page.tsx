@@ -2,12 +2,18 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Star, Search, ChevronDown, Calendar, ArrowRight } from "lucide-react";
+import { Star, Search, Calendar, ArrowRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,25 +72,26 @@ function SelectChip({
   const opts: SelectOption[] = options.map((o) =>
     typeof o === "string" ? { v: o, l: o } : o
   );
-  const current = opts.find((o) => o.v === value) || opts[0];
 
   return (
-    <label className="relative inline-flex items-center gap-2 h-[42px] px-3.5 bg-background border border-border rounded-[10px] text-[13px] text-foreground cursor-pointer hover:border-ring/80 transition-colors">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{current.l}</span>
-      <ChevronDown className="size-3.5 text-muted-foreground" />
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 opacity-0 cursor-pointer w-full"
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "h-[42px] px-3.5 bg-background border border-border rounded-[10px] text-[13px] text-foreground",
+          "hover:border-ring/80 transition-colors gap-1.5 w-auto"
+        )}
       >
+        <span className="text-muted-foreground">{label}</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
         {opts.map((o) => (
-          <option key={o.v} value={o.v}>
+          <SelectItem key={o.v} value={o.v}>
             {o.l}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </label>
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -462,7 +469,7 @@ export function DoctorsPage() {
                 <DoctorCard
                   key={d.id}
                   doctor={d}
-                  onView={() => router.push(`/booking?doctorId=${d.id}`)}
+                  onView={() => router.push(`/doctors/${d.id}`)}
                   onBook={() => router.push(`/booking?doctorId=${d.id}`)}
                 />
               ))}

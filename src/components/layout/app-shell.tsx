@@ -23,6 +23,7 @@ export function AppShell({ children, user, onLogout }: AppShellProps) {
   const getBreadcrumbs = () => {
     if (pathname === '/') return ['Find a doctor'];
     if (pathname === '/appointments') return ['Appointments'];
+    if (pathname.startsWith('/doctors/')) return ['Find a doctor', 'Doctor profile'];
     if (pathname.startsWith('/booking')) return ['Find a doctor', 'Book appointment'];
     return ['VirtuCare'];
   };
