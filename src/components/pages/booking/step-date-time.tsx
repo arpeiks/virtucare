@@ -1,0 +1,269 @@
+"use client"
+
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+interface Doctor {
+  id: string
+  name: string
+  specialty: string
+  slotsByDay: Record<number, string[]>
+}
+
+interface StepDateTimeProps {
+  doctor: Doctor
+  selectedDate: Date | null
+  setSelectedDate: (date: Date | null) => void
+  selectedTime: string
+  setSelectedTime: (time: string) => void
+  slotStyle?: 'chips' | 'list'
+}
+
+// Utility functions
+const addDays = (date: Date, days: number) => {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+const sameDay = (date1: Date, date2: Date) => {
+  return date1.toDateString() === date2.toDateString()
+}
+
+const formatDateShort = (date: Date) => {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+const formatDateLong = (date: Date) => {
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(':')
+  const hour = parseInt(hours)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${minutes} ${ampm}`
+}
+
+export function StepDateTime({
+  doctor,
+  selectedDate,
+  setSelectedDate,
+  selectedTime,
+  setSelectedTime,
+  slotStyle = 'chips'
+}: StepDateTimeProps) {
+  const [weekStart, setWeekStart] = useState(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return today
+  })
+
+  const days = Array.from({ length: 14 }, (_, i) => addDays(weekStart, i))
+  
+  const slotsForDate = (date: Date) => doctor.slotsByDay[date.getDay()] || []
+
+  const canGoBack = weekStart > new Date()
+
+  return (
+    <div>
+      <h2 className="font-serif text-[28px] text-foreground mb-0 font-normal tracking-tight">
+        Pick a date
+      </h2>
+      <p className="text-sm text-muted-foreground mt-1.5">
+        Available in the next two weeks. All times in your local time zone.
+      </p>
+
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between mt-6 mb-3">
+        <div className="text-sm text-muted-foreground">
+          {formatDateShort(days[0])} — {formatDateShort(days[days.length - 1])}
+        </div>
+        <div className="flex gap-1.5">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setWeekStart(addDays(weekStart, -7))}
+            disabled={!canGoBack}
+          >
+            <ChevronLeft size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setWeekStart(addDays(weekStart, 7))}
+          >
+            <ChevronRight size={14} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-2">
+        {days.slice(0, 7).map(date => {
+          const slots = slotsForDate(date)
+          const isSelected = selectedDate ? sameDay(selectedDate, date) : false
+          const isPast = date < new Date() && !sameDay(date, new Date())
+          const isDisabled = isPast || slots.length === 0
+
+          return (
+            <DayCell
+              key={date.toISOString()}
+              date={date}
+              slots={slots.length}
+              selected={isSelected}
+              disabled={isDisabled}
+              onClick={() => {
+                setSelectedDate(date)
+                setSelectedTime('')
+              }}
+            />
+          )
+        })}
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 mt-2">
+        {days.slice(7, 14).map(date => {
+          const slots = slotsForDate(date)
+          const isSelected = selectedDate ? sameDay(selectedDate, date) : false
+          const isDisabled = slots.length === 0
+
+          return (
+            <DayCell
+              key={date.toISOString()}
+              date={date}
+              slots={slots.length}
+              selected={isSelected}
+              disabled={isDisabled}
+              onClick={() => {
+                setSelectedDate(date)
+                setSelectedTime('')
+              }}
+            />
+          )
+        })}
+      </div>
+
+      {/* Time Slots */}
+      <div className="mt-8">
+        <h3 className="font-serif text-[22px] text-foreground mb-0 font-normal tracking-tight">
+          {selectedDate 
+            ? `Available times · ${formatDateLong(selectedDate)}`
+            : 'Select a date to see times'
+          }
+        </h3>
+
+        {selectedDate ? (
+          (() => {
+            const slots = slotsForDate(selectedDate)
+            
+            if (slots.length === 0) {
+              return (
+                <div className="mt-4 py-6 text-sm text-muted-foreground">
+                  No appointments available on this day. Try another date.
+                </div>
+              )
+            }
+
+            if (slotStyle === 'list') {
+              return (
+                <div className="mt-4 flex flex-col gap-1.5">
+                  {slots.map(slot => (
+                    <button
+                      key={slot}
+                      onClick={() => setSelectedTime(slot)}
+                      className={cn(
+                        "p-3.5 text-left border rounded-lg cursor-pointer text-sm flex justify-between items-center transition-colors",
+                        selectedTime === slot
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-card hover:bg-muted/50"
+                      )}
+                    >
+                      <span>{formatTime(slot)}</span>
+                      {selectedTime === slot && <Check size={16} className="text-primary" />}
+                    </button>
+                  ))}
+                </div>
+              )
+            }
+
+            // Chips style
+            return (
+              <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2">
+                {slots.map(slot => (
+                  <button
+                    key={slot}
+                    onClick={() => setSelectedTime(slot)}
+                    className={cn(
+                      "p-3 border rounded-lg cursor-pointer text-sm font-medium transition-colors",
+                      selectedTime === slot
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card hover:bg-muted/50"
+                    )}
+                  >
+                    {formatTime(slot)}
+                  </button>
+                ))}
+              </div>
+            )
+          })()
+        ) : (
+          <div className="mt-4 py-6 text-sm text-muted-foreground">
+            Choose a day above to see open times.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface DayCellProps {
+  date: Date
+  slots: number
+  selected?: boolean
+  disabled?: boolean
+  onClick: () => void
+}
+
+function DayCell({ date, slots, selected, disabled, onClick }: DayCellProps) {
+  const isToday = sameDay(date, new Date())
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "p-3.5 border rounded-lg cursor-pointer text-center flex flex-col items-center gap-1 transition-colors",
+        selected
+          ? "border-primary bg-primary text-primary-foreground"
+          : disabled
+          ? "border-border bg-background text-muted-foreground opacity-55 cursor-not-allowed"
+          : "border-border bg-card hover:bg-muted/50"
+      )}
+    >
+      <div className={cn(
+        "text-xs uppercase tracking-wider",
+        selected ? "text-primary-foreground" : "text-muted-foreground"
+      )}>
+        {date.toLocaleDateString('en-US', { weekday: 'short' })}
+      </div>
+      <div className="font-serif text-[22px] leading-none">
+        {date.getDate()}
+      </div>
+      <div className={cn(
+        "text-xs mt-0.5",
+        selected ? "text-primary-foreground" : "text-muted-foreground"
+      )}>
+        {isToday ? 'Today' : slots === 0 ? 'Full' : `${slots} open`}
+      </div>
+    </button>
+  )
+}

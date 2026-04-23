@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { AppShell } from "@/components/layout";
-import { DoctorsPage } from "@/components/pages";
+import { AppointmentsPage } from "@/components/pages";
 
-export default function Home() {
+export default function Appointments() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
@@ -31,7 +31,7 @@ export default function Home() {
 
   return (
     <AppShell user={user} onLogout={handleLogout}>
-      <DoctorsPage />
+      <AppointmentsPage />
     </AppShell>
   );
 }

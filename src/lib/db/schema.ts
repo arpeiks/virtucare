@@ -1,4 +1,34 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+
+export const doctor = pgTable("doctor", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  specialty: text("specialty").notNull(),
+  subspecialty: text("subspecialty"),
+  bio: text("bio"),
+  imageUrl: text("image_url"),
+  // JSON-encoded availability: Record<number, string[]> keyed by day-of-week (0–6)
+  slotsByDay: text("slots_by_day").notNull().default("{}"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const appointment = pgTable("appointment", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  doctorId: text("doctor_id")
+    .notNull()
+    .references(() => doctor.id, { onDelete: "cascade" }),
+  date: text("date").notNull(), // ISO date string YYYY-MM-DD
+  time: text("time").notNull(), // HH:MM
+  reason: text("reason").notNull(),
+  visitType: text("visit_type").notNull().default("Video visit"),
+  status: text("status").notNull().default("confirmed"), // confirmed | cancelled | completed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
