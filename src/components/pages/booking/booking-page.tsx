@@ -9,6 +9,7 @@ import { StepDateTime } from "./step-date-time"
 import { StepReason } from "./step-reason"
 import { StepReview } from "./step-review"
 import { BookingSummary } from "./booking-summary"
+import { format, parse } from "date-fns"
 
 export interface Doctor {
   id: string
@@ -46,7 +47,7 @@ export function BookingPage({
 
   const [step, setStep] = useState(1)
   const [selectedDate, setSelectedDate] = useState<Date | null>(
-    initialDate ? new Date(initialDate) : null
+    initialDate ? parse(initialDate, "yyyy-MM-dd", new Date()) : null
   )
   const [selectedTime, setSelectedTime] = useState(initialTime ?? "")
   const [reason, setReason] = useState("")
@@ -92,7 +93,7 @@ export function BookingPage({
     setError(null)
 
     try {
-      const dateStr = selectedDate.toISOString().split("T")[0]
+      const dateStr = format(selectedDate, "yyyy-MM-dd")
 
       const method = editingId ? "PATCH" : "POST"
       const url = editingId

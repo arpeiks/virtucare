@@ -4,14 +4,10 @@ import { db } from "@/lib/db";
 import { appointment, doctor } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { parse, isBefore } from "date-fns";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const doctorIdParam = searchParams.get("doctorId");
 
@@ -33,6 +29,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(rows);
     }
 
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const rows = await db
       .select({
         id: appointment.id,
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
         visitType: appointment.visitType,
         status: appointment.status,
         createdAt: appointment.createdAt,
+        updatedAt: appointment.updatedAt,
         doctorId: appointment.doctorId,
         doctorName: doctor.name,
         doctorSpecialty: doctor.specialty,
@@ -73,12 +75,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Reject past dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const appointmentDate = new Date(date);
-    appointmentDate.setHours(0, 0, 0, 0);
-    if (appointmentDate < today) {
+    // Reject past appointments, taking both date and time into account.
+    const appointmentDateTime = parse(
+      `${date} ${time}`,
+      "yyyy-MM-dd HH:mm",
+      new Date()
+    );
+    if (isBefore(appointmentDateTime, new Date())) {
       return NextResponse.json({ error: "Cannot book an appointment in the past" }, { status: 400 });
     }
 

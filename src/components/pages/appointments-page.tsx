@@ -39,6 +39,7 @@ interface AppointmentRow {
   visitType: string;
   status: string;
   createdAt: string;
+  updatedAt: string;
   doctorId: string;
   doctorName: string;
   doctorSpecialty: string;
@@ -520,9 +521,14 @@ export function AppointmentsPage() {
 
   const past = useMemo(
     () =>
-      appointments.filter(
-        (a) => a.status === "cancelled" || !isUpcoming(a.date, a.time)
-      ),
+      appointments
+        .filter(
+          (a) => a.status === "cancelled" || !isUpcoming(a.date, a.time)
+        )
+        .sort((a, b) => {
+          // Sort by updatedAt descending (most recent first)
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        }),
     [appointments]
   );
 

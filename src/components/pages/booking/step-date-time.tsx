@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
 
 interface Doctor {
   id: string
@@ -76,7 +77,7 @@ export function StepDateTime({
 
   const bookedSet = new Set(bookedSlots.map(s => `${s.date}|${s.time}`))
 
-  const toDateStr = (date: Date) => date.toISOString().split('T')[0]
+  const toDateStr = (date: Date) => format(date, "yyyy-MM-dd")
 
   // Returns all slots for a date, each with a disabled reason if applicable
   const slotsForDate = (date: Date): { time: string; disabled: boolean; reason?: string }[] => {
@@ -143,16 +144,16 @@ export function StepDateTime({
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-2">
         {days.slice(0, 7).map(date => {
-          const slots = slotsForDate(date)
+          const avail = availableCount(date)
           const isSelected = selectedDate ? sameDay(selectedDate, date) : false
           const isPast = date < today && !sameDay(date, today)
-          const isDisabled = isPast || slots.length === 0
+          const isDisabled = isPast || avail === 0
 
           return (
             <DayCell
               key={date.toISOString()}
               date={date}
-              slots={slots.length}
+              slots={avail}
               selected={isSelected}
               disabled={isDisabled}
               onClick={() => {
@@ -166,16 +167,16 @@ export function StepDateTime({
 
       <div className="grid grid-cols-7 gap-2 mt-2">
         {days.slice(7, 14).map(date => {
-          const slots = slotsForDate(date)
+          const avail = availableCount(date)
           const isSelected = selectedDate ? sameDay(selectedDate, date) : false
           const isPast = date < today && !sameDay(date, today)
-          const isDisabled = isPast || slots.length === 0
+          const isDisabled = isPast || avail === 0
 
           return (
             <DayCell
               key={date.toISOString()}
               date={date}
-              slots={slots.length}
+              slots={avail}
               selected={isSelected}
               disabled={isDisabled}
               onClick={() => {
@@ -199,6 +200,7 @@ export function StepDateTime({
         {selectedDate ? (
           (() => {
             const slots = slotsForDate(selectedDate)
+            const allDisabled = slots.every(s => s.disabled)
             
             if (slots.length === 0) {
               return (
@@ -208,22 +210,60 @@ export function StepDateTime({
               )
             }
 
+            if (allDisabled) {
+              return (
+                <>
+                  <div className="mt-4 py-3 text-sm text-muted-foreground">
+                    All slots on this day are unavailable. Try another date.
+                  </div>
+                  {slotStyle === 'list' ? (
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      {slots.map(({ time: slot }) => (
+                        <button
+                          key={slot}
+                          disabled
+                          className="p-3.5 text-left border rounded-lg text-sm flex justify-between items-center border-border bg-card text-muted-foreground opacity-50 cursor-not-allowed"
+                        >
+                          <span>{formatTime(slot)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2">
+                      {slots.map(({ time: slot }) => (
+                        <button
+                          key={slot}
+                          disabled
+                          className="p-3 border rounded-lg text-sm font-medium border-border bg-card text-muted-foreground opacity-50 cursor-not-allowed"
+                        >
+                          {formatTime(slot)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            }
+
             if (slotStyle === 'list') {
               return (
                 <div className="mt-4 flex flex-col gap-1.5">
-                  {slots.map(slot => (
+                  {slots.map(({ time: slot, disabled }) => (
                     <button
                       key={slot}
-                      onClick={() => setSelectedTime(slot)}
+                      onClick={() => !disabled && setSelectedTime(slot)}
+                      disabled={disabled}
                       className={cn(
-                        "p-3.5 text-left border rounded-lg cursor-pointer text-sm flex justify-between items-center transition-colors",
-                        selectedTime === slot
-                          ? "border-primary bg-primary/5 text-foreground"
-                          : "border-border bg-card hover:bg-muted/50"
+                        "p-3.5 text-left border rounded-lg text-sm flex justify-between items-center transition-colors",
+                        disabled
+                          ? "border-border bg-card text-muted-foreground opacity-50 cursor-not-allowed"
+                          : selectedTime === slot
+                          ? "border-primary bg-primary/5 text-foreground cursor-pointer"
+                          : "border-border bg-card hover:bg-muted/50 cursor-pointer"
                       )}
                     >
                       <span>{formatTime(slot)}</span>
-                      {selectedTime === slot && <Check size={16} className="text-primary" />}
+                      {selectedTime === slot && !disabled && <Check size={16} className="text-primary" />}
                     </button>
                   ))}
                 </div>
@@ -233,15 +273,18 @@ export function StepDateTime({
             // Chips style
             return (
               <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(108px,1fr))] gap-2">
-                {slots.map(slot => (
+                {slots.map(({ time: slot, disabled }) => (
                   <button
                     key={slot}
-                    onClick={() => setSelectedTime(slot)}
+                    onClick={() => !disabled && setSelectedTime(slot)}
+                    disabled={disabled}
                     className={cn(
-                      "p-3 border rounded-lg cursor-pointer text-sm font-medium transition-colors",
-                      selectedTime === slot
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card hover:bg-muted/50"
+                      "p-3 border rounded-lg text-sm font-medium transition-colors",
+                      disabled
+                        ? "border-border bg-card text-muted-foreground opacity-50 cursor-not-allowed"
+                        : selectedTime === slot
+                        ? "border-primary bg-primary text-primary-foreground cursor-pointer"
+                        : "border-border bg-card hover:bg-muted/50 cursor-pointer"
                     )}
                   >
                     {formatTime(slot)}

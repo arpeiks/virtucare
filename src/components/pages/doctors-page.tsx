@@ -16,6 +16,76 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+// ─── Booked-slot helpers ──────────────────────────────────────────────────────
+
+type BookedSlot = { date: string; time: string };
+
+function toDateStr(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Given a doctor's slotsByDay and the set of already-booked slots,
+ * return only the slots for `date` that are neither in the past nor booked.
+ */
+function availableSlotsForDate(
+  date: Date,
+  slotsByDay: Record<number, string[]>,
+  bookedSet: Set<string>
+): string[] {
+  const all = slotsByDay[date.getDay()] ?? [];
+  const dateStr = toDateStr(date);
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isToday = date.toDateString() === today.toDateString();
+
+  return all.filter((slot) => {
+    if (bookedSet.has(`${dateStr}|${slot}`)) return false;
+    if (isToday) {
+      const [h, m] = slot.split(":").map(Number);
+      const slotTime = new Date(date);
+      slotTime.setHours(h, m, 0, 0);
+      if (slotTime <= now) return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Returns true if the doctor has at least one available (non-past, non-booked)
+ * slot on the given date.
+ */
+function hasAvailableSlotOnDate(
+  date: Date,
+  slotsByDay: Record<number, string[]>,
+  bookedSet: Set<string>
+): boolean {
+  return availableSlotsForDate(date, slotsByDay, bookedSet).length > 0;
+}
+
+/**
+ * Returns true if the doctor has at least one available slot within the next
+ * `days` calendar days (starting from today).
+ */
+function hasAvailableSlotWithinDays(
+  slotsByDay: Record<number, string[]>,
+  bookedSet: Set<string>,
+  days: number
+): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    if (hasAvailableSlotOnDate(d, slotsByDay, bookedSet)) return true;
+  }
+  return false;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Doctor {
@@ -99,17 +169,27 @@ function SelectChip({
 
 function DoctorCard({
   doctor,
+  bookedSlots,
   onView,
   onBook,
 }: {
   doctor: Doctor;
+  bookedSlots: BookedSlot[];
   onView: () => void;
   onBook: () => void;
 }) {
   const today = new Date();
-  const dow = today.getDay();
-  const todaysSlots = doctor.slotsByDay[dow] ?? [];
-  const tomorrowSlots = doctor.slotsByDay[(dow + 1) % 7] ?? [];
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const bookedSet = useMemo(
+    () => new Set(bookedSlots.map((s) => `${s.date}|${s.time}`)),
+    [bookedSlots]
+  );
+
+  const todaysSlots = availableSlotsForDate(today, doctor.slotsByDay, bookedSet);
+  const tomorrowSlots = availableSlotsForDate(tomorrow, doctor.slotsByDay, bookedSet);
   const displaySlots = todaysSlots.length > 0 ? todaysSlots : tomorrowSlots;
   const slotsLabel = todaysSlots.length > 0 ? "Today" : "Tomorrow";
 
@@ -285,6 +365,10 @@ export function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Map of doctorId → booked slots fetched from the API
+  const [bookedSlotsByDoctor, setBookedSlotsByDoctor] = useState<
+    Record<string, BookedSlot[]>
+  >({});
 
   const [query, setQuery] = useState("");
   const [specialty, setSpecialty] = useState("All specialties");
@@ -292,16 +376,35 @@ export function DoctorsPage() {
   const [sort, setSort] = useState("rating");
 
   useEffect(() => {
-    fetch("/api/doctors")
-      .then((r) => r.json())
-      .then((data) => {
+    async function load() {
+      try {
+        const r = await fetch("/api/doctors");
+        const data: Doctor[] = await r.json();
+
+        // Fetch booked slots for every doctor in parallel (best-effort),
+        // before revealing the cards so slots are never shown then removed.
+        const entries = await Promise.all(
+          data.map(async (d) => {
+            try {
+              const res = await fetch(`/api/appointments?doctorId=${d.id}`);
+              if (!res.ok) return [d.id, []] as [string, BookedSlot[]];
+              const slots: BookedSlot[] = await res.json();
+              return [d.id, slots] as [string, BookedSlot[]];
+            } catch {
+              return [d.id, []] as [string, BookedSlot[]];
+            }
+          })
+        );
+
         setDoctors(data);
-        setLoading(false);
-      })
-      .catch(() => {
+        setBookedSlotsByDoctor(Object.fromEntries(entries));
+      } catch {
         setError("Failed to load doctors. Please try again.");
+      } finally {
         setLoading(false);
-      });
+      }
+    }
+    load();
   }, []);
 
   const specialties = useMemo(() => {
@@ -310,8 +413,16 @@ export function DoctorsPage() {
   }, [doctors]);
 
   const availableToday = useMemo(
-    () => doctors.filter((d) => d.nextAvailable === "Today").length,
-    [doctors]
+    () =>
+      doctors.filter((d) => {
+        const bookedSet = new Set(
+          (bookedSlotsByDoctor[d.id] ?? []).map((s) => `${s.date}|${s.time}`)
+        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return hasAvailableSlotOnDate(today, d.slotsByDay, bookedSet);
+      }).length,
+    [doctors, bookedSlotsByDoctor]
   );
 
   const filtered = useMemo(() => {
@@ -327,13 +438,21 @@ export function DoctorsPage() {
         )
           return false;
       }
-      if (availability === "today" && d.nextAvailable !== "Today") return false;
-      if (
-        availability === "week" &&
-        d.nextAvailable !== "Today" &&
-        d.nextAvailable !== "Tomorrow"
-      )
-        return false;
+      if (availability === "today" || availability === "week") {
+        const bookedSet = new Set(
+          (bookedSlotsByDoctor[d.id] ?? []).map((s) => `${s.date}|${s.time}`)
+        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (availability === "today") {
+          if (!hasAvailableSlotOnDate(today, d.slotsByDay, bookedSet))
+            return false;
+        } else {
+          // "week" — any slot in the next 7 days
+          if (!hasAvailableSlotWithinDays(d.slotsByDay, bookedSet, 7))
+            return false;
+        }
+      }
       return true;
     });
 
@@ -469,6 +588,7 @@ export function DoctorsPage() {
                 <DoctorCard
                   key={d.id}
                   doctor={d}
+                  bookedSlots={bookedSlotsByDoctor[d.id] ?? []}
                   onView={() => router.push(`/doctors/${d.id}`)}
                   onBook={() => router.push(`/booking?doctorId=${d.id}`)}
                 />
