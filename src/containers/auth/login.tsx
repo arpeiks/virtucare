@@ -52,7 +52,7 @@ export const Form = () => {
       <div className="text-xs tracking-[0.6px] uppercase text-subtle-foreground">
         Sign in
       </div>
-      <h1 className="font-serif font-normal text-[44px] leading-[1.05] tracking-[-0.5px] mt-2.5 mb-2 text-foreground">
+      <h1 className="font-serif font-normal text-[32px] sm:text-[44px] leading-[1.05] tracking-[-0.5px] mt-2.5 mb-2 text-foreground">
         Welcome back.
       </h1>
       <p className="text-sm text-muted-foreground mb-7 leading-[1.55]">

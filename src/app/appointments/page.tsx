@@ -12,7 +12,7 @@ export default function Appointments() {
 
   useEffect(() => {
     if (!isPending && !session) {
-      router.replace("/login");
+      router.replace("/auth/login");
     }
   }, [isPending, router, session]);
 
@@ -20,7 +20,7 @@ export default function Appointments() {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    router.replace("/login");
+    router.replace("/auth/login");
   };
 
   const user = {

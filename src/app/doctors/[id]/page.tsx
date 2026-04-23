@@ -15,7 +15,7 @@ export default function DoctorDetailRoute() {
 
   useEffect(() => {
     if (!isPending && !session) {
-      router.replace("/login");
+      router.replace("/auth/login");
     }
   }, [isPending, router, session]);
 
@@ -23,7 +23,7 @@ export default function DoctorDetailRoute() {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    router.replace("/login");
+    router.replace("/auth/login");
   };
 
   const user = {

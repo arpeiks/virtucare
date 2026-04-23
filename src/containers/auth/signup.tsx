@@ -62,7 +62,7 @@ export const Form = () => {
       <div className="text-xs tracking-[0.6px] uppercase text-subtle-foreground">
         Sign up
       </div>
-      <h1 className="font-serif font-normal text-[44px] leading-[1.05] tracking-[-0.5px] mt-2.5 mb-2 text-foreground">
+      <h1 className="font-serif font-normal text-[32px] sm:text-[44px] leading-[1.05] tracking-[-0.5px] mt-2.5 mb-2 text-foreground">
         Create account.
       </h1>
       <p className="text-sm text-muted-foreground mb-7 leading-[1.55]">
@@ -203,7 +203,7 @@ export const Form = () => {
         <p className="text-center text-sm text-muted-foreground mt-1">
           Already have an account?{" "}
           <Link
-            href="/auth/login"
+            href="/auth/auth/login"
             className="text-foreground underline underline-offset-4 hover:text-primary"
           >
             Sign in

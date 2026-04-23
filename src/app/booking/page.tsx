@@ -26,7 +26,7 @@ function BookingPageContent() {
 
   useEffect(() => {
     if (!isPending && !session) {
-      router.replace("/login");
+      router.replace("/auth/login");
     }
   }, [isPending, router, session]);
 
@@ -34,7 +34,7 @@ function BookingPageContent() {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    router.replace("/login");
+    router.replace("/auth/login");
   };
 
   const handleBack = () => {
