@@ -9,7 +9,7 @@ interface Doctor {
   id: string
   name: string
   specialty: string
-  subspecialty?: string
+  subspecialty?: string | null
 }
 
 interface StepReviewProps {

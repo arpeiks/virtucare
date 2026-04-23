@@ -19,6 +19,7 @@ interface StepDateTimeProps {
   selectedTime: string
   setSelectedTime: (time: string) => void
   slotStyle?: 'chips' | 'list'
+  bookedSlots?: { date: string; time: string }[]
 }
 
 // Utility functions
@@ -59,7 +60,8 @@ export function StepDateTime({
   setSelectedDate,
   selectedTime,
   setSelectedTime,
-  slotStyle = 'chips'
+  slotStyle = 'chips',
+  bookedSlots = []
 }: StepDateTimeProps) {
   const [weekStart, setWeekStart] = useState(() => {
     const today = new Date()
@@ -69,9 +71,41 @@ export function StepDateTime({
 
   const days = Array.from({ length: 14 }, (_, i) => addDays(weekStart, i))
   
-  const slotsForDate = (date: Date) => doctor.slotsByDay[date.getDay()] || []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-  const canGoBack = weekStart > new Date()
+  const bookedSet = new Set(bookedSlots.map(s => `${s.date}|${s.time}`))
+
+  const toDateStr = (date: Date) => date.toISOString().split('T')[0]
+
+  // Returns all slots for a date, each with a disabled reason if applicable
+  const slotsForDate = (date: Date): { time: string; disabled: boolean; reason?: string }[] => {
+    const all = doctor.slotsByDay[date.getDay()] || []
+    const dateStr = toDateStr(date)
+    const now = new Date()
+    const isToday = sameDay(date, today)
+
+    return all.map(slot => {
+      if (bookedSet.has(`${dateStr}|${slot}`)) {
+        return { time: slot, disabled: true, reason: 'booked' }
+      }
+      // For today, also disable slots whose time has already passed
+      if (isToday) {
+        const [h, m] = slot.split(':').map(Number)
+        const slotTime = new Date(date)
+        slotTime.setHours(h, m, 0, 0)
+        if (slotTime <= now) {
+          return { time: slot, disabled: true, reason: 'past' }
+        }
+      }
+      return { time: slot, disabled: false }
+    })
+  }
+
+  // Available (non-disabled) slot count — used to decide if a day cell is selectable
+  const availableCount = (date: Date) => slotsForDate(date).filter(s => !s.disabled).length
+
+  const canGoBack = weekStart > today
 
   return (
     <div>
@@ -111,7 +145,7 @@ export function StepDateTime({
         {days.slice(0, 7).map(date => {
           const slots = slotsForDate(date)
           const isSelected = selectedDate ? sameDay(selectedDate, date) : false
-          const isPast = date < new Date() && !sameDay(date, new Date())
+          const isPast = date < today && !sameDay(date, today)
           const isDisabled = isPast || slots.length === 0
 
           return (
@@ -134,7 +168,8 @@ export function StepDateTime({
         {days.slice(7, 14).map(date => {
           const slots = slotsForDate(date)
           const isSelected = selectedDate ? sameDay(selectedDate, date) : false
-          const isDisabled = slots.length === 0
+          const isPast = date < today && !sameDay(date, today)
+          const isDisabled = isPast || slots.length === 0
 
           return (
             <DayCell

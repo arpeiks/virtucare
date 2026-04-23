@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointment } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -18,6 +18,54 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     const { date, time, reason, visitType, status } = body;
+
+    // If date or time is being changed, validate them
+    if (date || time) {
+      // Fetch the existing appointment to get the full date+time for comparison
+      const [existing] = await db
+        .select()
+        .from(appointment)
+        .where(and(eq(appointment.id, id), eq(appointment.userId, session.user.id)))
+        .limit(1);
+
+      if (!existing) {
+        return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+      }
+
+      const newDate = date ?? existing.date;
+      const newTime = time ?? existing.time;
+
+      // Reject past dates
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const appointmentDate = new Date(newDate);
+      appointmentDate.setHours(0, 0, 0, 0);
+      if (appointmentDate < today) {
+        return NextResponse.json({ error: "Cannot book an appointment in the past" }, { status: 400 });
+      }
+
+      // Reject if the slot is already taken by another confirmed appointment (excluding this one)
+      const [conflict] = await db
+        .select({ id: appointment.id })
+        .from(appointment)
+        .where(
+          and(
+            eq(appointment.doctorId, existing.doctorId),
+            eq(appointment.date, newDate),
+            eq(appointment.time, newTime),
+            eq(appointment.status, "confirmed"),
+            ne(appointment.id, id)
+          )
+        )
+        .limit(1);
+
+      if (conflict) {
+        return NextResponse.json(
+          { error: "This time slot is no longer available. Please choose another time." },
+          { status: 409 }
+        );
+      }
+    }
 
     const [updated] = await db
       .update(appointment)

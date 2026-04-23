@@ -40,6 +40,7 @@ export function BookingPage({
 }: BookingPageProps) {
   const [doctor, setDoctor] = useState<Doctor | null>(null)
   const [loadingDoctor, setLoadingDoctor] = useState(true)
+  const [bookedSlots, setBookedSlots] = useState<{ date: string; time: string }[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,7 +68,21 @@ export function BookingPage({
         setLoadingDoctor(false)
       }
     }
+
+    async function fetchBookedSlots() {
+      try {
+        const res = await fetch(`/api/appointments?doctorId=${doctorId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setBookedSlots(data)
+        }
+      } catch {
+        // Non-critical — if this fails, slots just won't be greyed out
+      }
+    }
+
     fetchDoctor()
+    fetchBookedSlots()
   }, [doctorId])
 
   const handleSubmit = async () => {
@@ -168,6 +183,7 @@ export function BookingPage({
               selectedTime={selectedTime}
               setSelectedTime={setSelectedTime}
               slotStyle={slotStyle}
+              bookedSlots={bookedSlots}
             />
           )}
 
